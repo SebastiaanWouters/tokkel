@@ -100,16 +100,17 @@ async function decryptIncoming(message: Record): Promise<Decrypted> {
       return { created: message.created, from: expanded.expand.from, to: expanded.expand.to, content: msg };
   }
 
-async function postMessage(msg: string, from: string, to: string, privKey: string) {
-  const receiver = await getUserByName(to);
+async function postMessage(msg: string, from: User, to: User) {
   let ciphertext = msg;
+  let privKey = null;
+  currentKey.subscribe((value) => privKey = value)
   if (privKey) {
-    ciphertext = await nip04.encrypt(privKey, receiver.pubkey, msg);
+    ciphertext = await nip04.encrypt(privKey, to.pubkey, msg);
   }
   // example create data
   const data = {
-    from,
-    to: receiver.id,
+    from: from.id,
+    to: to.id,
     content: JSON.stringify({ message: ciphertext }),
   };
 
@@ -148,8 +149,6 @@ if (Capacitor.getPlatform() === "web") {
 
 const pb = new PocketBase(url);
 
-const loaded = false;
-
 const currentUser = writable<User>(null)
 
 const currentKey = asyncWritable(
@@ -180,11 +179,23 @@ const currentChatPartner = asyncable(async ($params) => {
   }
 }, null, [  params ]);
 
-const messages = asyncable(async () => {
+const messages_old = asyncable(async () => {
   const msg = await getMessages();
   const dec = await decryptMessages(msg);
   return dec;
 }, [], [ currentKey, currentUser]);
+
+const messages = asyncWritable(
+  [currentUser, currentKey],
+  async ($currentUser) => {
+    if ($currentUser === null) {
+      return [];
+    }
+    const msg = await getMessages();
+    const dec = await decryptMessages(msg);
+    return dec;
+  }
+);
 
 const partners = asyncable(async ($messages) => {
   const messages =  await $messages as Decrypted[];
@@ -222,7 +233,7 @@ async function setData() {
   try {
     currentUser.set(pb.authStore.model as User);
     //realtime & changes
-    pb.collection("messages").subscribe("*", async (e) => {console.log(e.record); const dec = await decryptIncoming(e.record); messages.update($msg => {return [dec, ...$msg]}) });
+    pb.collection("messages").subscribe("*", async (e) => {const dec = await decryptIncoming(e.record); console.log("dec", dec.content); messages.update(msg => [dec, ...msg]) });
   } catch {
 
   }

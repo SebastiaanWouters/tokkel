@@ -6,6 +6,7 @@
     postMessage,
     currentUser,
     currentMessages,
+    currentChatPartner,
   } from "../lib/pocketbase";
 
   let receiver = "rec";
@@ -16,12 +17,7 @@
   <div class="flex flex-col justify-center gap-1 overflow-auto fill">
     <input type="text" class="text-black" bind:value={receiver} />
     <input type="text" class="text-black" bind:value={message} />
-    <button
-      on:click={() =>
-        postMessage(message, $currentUser.id, receiver, $currentKey)}
-    >
-      Post
-    </button>
+    <button on:click={() => {}}> Post </button>
     <button on:click={() => logoutUser()}> Logout </button>
     <p>{$currentKey}</p>
     {#await $currentMessages}

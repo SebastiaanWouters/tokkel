@@ -64,7 +64,7 @@
           <NavLayout
             ><div slot="topNav" />
             <div slot="middle" class="fill"><Chat /></div>
-            <NavBar slot="bottomNav" /></NavLayout
+            <div slot="bottomNav" /></NavLayout
           >
         </div>
       {:else if resolve($path, "/settings")}
