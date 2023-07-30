@@ -1,0 +1,51 @@
+{
+  "name": "tokkel",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-check --tsconfig ./tsconfig.json"
+  },
+  "devDependencies": {
+    "@skeletonlabs/skeleton": "^1.10.0",
+    "@sveltejs/vite-plugin-svelte": "^2.4.2",
+    "@tsconfig/svelte": "^5.0.0",
+    "autoprefixer": "^10.4.14",
+    "elegua": "^2.1.0",
+    "fractils": "^3.1.2",
+    "postcss": "^8.4.24",
+    "postcss-load-config": "^4.0.1",
+    "svelte": "^4.0.5",
+    "svelte-check": "^3.4.6",
+    "svelte-routing": "^1.11.0",
+    "tailwindcss": "^3.3.2",
+    "tslib": "^2.6.0",
+    "typescript": "^5.0.2",
+    "vite": "^4.4.5"
+  },
+  "dependencies": {
+    "@capacitor/android": "^5.2.2",
+    "@capacitor/cli": "^5.2.2",
+    "@capacitor/core": "^5.2.2",
+    "@felte/validator-zod": "^1.0.16",
+    "@noble/secp256k1": "^1.5.3",
+    "@panva/hkdf": "^1.1.1",
+    "@square/svelte-store": "^1.0.17",
+    "@tailwindcss/forms": "^0.5.4",
+    "@tailwindcss/typography": "^0.5.9",
+    "buffer": "^6.0.3",
+    "capacitor-secure-storage-plugin": "^0.9.0",
+    "date-fns": "^2.30.0",
+    "felte": "^1.2.11",
+    "konsta": "^2.0.0",
+    "lucide-svelte": "^0.263.0",
+    "meltui": "^0.0.21",
+    "nostr-tools": "^1.13.1",
+    "pocketbase": "^0.15.3",
+    "svelte-asyncable": "^2.1.1",
+    "zod": "^3.21.4"
+  }
+}
