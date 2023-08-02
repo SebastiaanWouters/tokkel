@@ -1,5 +1,4 @@
 import { SecureStoragePlugin } from 'capacitor-secure-storage-plugin';
-import { writable } from "svelte/store";
 import * as secp from "@noble/secp256k1";
 import hkdf from '@panva/hkdf'
 import { intlFormatDistance } from 'date-fns';
@@ -11,22 +10,17 @@ type Response = {
     error: boolean
 }
 
-async function setSecureKey(key: string, value: string): Promise<Response> {
-    try {
-        await SecureStoragePlugin.set({ key, value })
-        return { value, error: false };
-    } catch (error) {
-        return { value: 'item not found', error: true };
-    }
+async function setSecureKey(key: string, value: string): Promise<boolean> {
+    
+        const res = await SecureStoragePlugin.set({ key, value })
+        return res.value;
 }
 
-async function getSecureKey(key: string): Promise<Response> {
-    try {
+async function getSecureKey(key: string): Promise<string> {
+  
         const value = await SecureStoragePlugin.get({ key })
-        return { value: value.value, error: false };
-    } catch (error) {
-        return { value: 'item not found', error: true };
-    }
+        return value.value;
+   
 }
 
 async function privKeyFromEntropy(ent: string, username: string) {
@@ -42,6 +36,34 @@ async function privKeyFromEntropy(ent: string, username: string) {
     const ret = secp.utils.bytesToHex(sk)
     return ret;
 }
+
+function mapDataToListOfMessages(data) {
+  const listOfMessages = [];
+
+  for (const [queryKey, messages] of data) {
+    for (const message of messages) {
+      listOfMessages.push({ queryKey, message });
+    }
+  }
+
+  return listOfMessages;
+}
+
+function convertStringMapToList(stringMap, sortByProperty) {
+  // Step 1: Parse the string representation of the map into an object
+  
+
+  // Step 2: Convert the object's values into an array of objects
+  const arrayOfObjects = Array.from(stringMap.values())
+
+  // Step 3: Sort the array of objects based on the desired property
+  arrayOfObjects.sort((b, a) => Date.parse(a[sortByProperty]) - Date.parse(b[sortByProperty]));
+
+  console.log(arrayOfObjects)
+
+  return arrayOfObjects;
+}
+
 
 const fromHexString = (hexString) =>
   Uint8Array.from(hexString.match(/.{1,2}/g).map((byte) => parseInt(byte, 16)));
@@ -71,5 +93,5 @@ function minutesAgoFromTimestamp(timestampString: string): string {
 
 }
 
-export { getSecureKey, publicRoutes, setSecureKey, minutesAgoFromTimestamp, privKeyFromEntropy, fromHexString, toHexString, filterUniqueByAttribute };
+export { getSecureKey, publicRoutes, setSecureKey, mapDataToListOfMessages, convertStringMapToList, minutesAgoFromTimestamp, privKeyFromEntropy, fromHexString, toHexString, filterUniqueByAttribute };
 export type { Response };

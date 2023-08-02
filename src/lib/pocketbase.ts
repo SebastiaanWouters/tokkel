@@ -2,9 +2,8 @@ import { Capacitor } from "@capacitor/core";
 import { derived, writable } from "svelte/store";
 import { Record, Admin } from "pocketbase";
 import { getPublicKey, nip04 } from "nostr-tools";
-import { asyncable, type Asyncable } from "svelte-asyncable";
-import { asyncReadable, asyncDerived, asyncWritable } from "@square/svelte-store";
-import { params } from "elegua";
+import { params, goto } from "elegua";
+import { asyncDerived, asyncWritable } from "@square/svelte-store";
 
 import PocketBase, { type ClientResponseError } from 'pocketbase';
 import { filterUniqueByAttribute, fromHexString, getSecureKey, privKeyFromEntropy, setSecureKey, toHexString, minutesAgoFromTimestamp } from "./utils";
@@ -16,11 +15,15 @@ interface User extends Record {
 
 interface ChatPartner {
   user: User,
-  created: string,
+  latest: string,
   content: string;
 }
 
-interface Decrypted {
+interface MessageRecord extends Record {
+  content: { message: string }
+}
+
+interface Message {
   to: User; 
   from: User;
   content: string;
@@ -28,11 +31,10 @@ interface Decrypted {
 
 }
 
-interface Message extends Record {
-  from: string;
-  to: string;
-  expand: object & { to: Record & User; from: Record & User };
-  content: object & { message: string };
+interface RawMessage {
+  content: { message: string };
+  created: string;
+  expand: { from: User, to: User }
 }
 
   async function createUser(username: string, password: string, passwordConfirm: string) {
@@ -48,17 +50,16 @@ interface Message extends Record {
         const sk = await privKeyFromEntropy(password, username);
         const pk = getPublicKey(sk);
         const response = await pb.collection("users").authWithPassword(username, password);
-        currentKey.set(sk);
+        setSecureKey(`${pb.authStore.model.username}-sk`, sk)
         await pb.collection('users').update(response.record.id, { pubkey: pk });
       }
 
   async function logoutUser() {
-    currentKey.set(null);
     pb.authStore.clear();
   }
 
-  async function getMessages() {
-    const msg = (await pb.collection('messages').getFullList({ expand: 'from,to', sort: '-created' })) as Message[];
+  async function getMessages() : Promise<RawMessage[]> {
+    const msg = (await pb.collection('messages').getFullList({ expand: 'from,to', sort: '-created' })) as RawMessage[];
     return msg;
 
 }
@@ -68,12 +69,14 @@ async function decryptMessage(msg: string, sk: string, pk: string) {
   return decrypted;
 }
 
-async function decryptMessages(messages: Message[]): Promise<Decrypted[]> {
-  let sk = null
-  currentKey.subscribe((value) => sk = value)
+async function decryptMessages(messages: RawMessage[]): Promise<Message[]> {
+  console.log(messages)
+  let sk = await currentKey.load()
+  console.log(sk)
   const decrypt = [];
   for (const msg of messages) {
     let dec = msg.content.message
+    console.log(dec)
     if (msg.expand.from.id === pb.authStore.model.id) {
       dec = await decryptMessage(msg.content.message, sk, msg.expand.to.pubkey)
     } else {
@@ -81,29 +84,27 @@ async function decryptMessages(messages: Message[]): Promise<Decrypted[]> {
     }
     decrypt.push({ created: msg.created, from: msg.expand.from, to: msg.expand.to, content: dec })
   }
-
+  console.log(decrypt)
   return decrypt;
   
 }
 
-async function decryptIncoming(message: Record): Promise<Decrypted> {
-  let sk = null
-  currentKey.subscribe((value) => sk = value)
+async function decryptIncoming(message: MessageRecord, from: User, to: User): Promise<Message> {
+  let sk = await currentKey.load()
   const expanded = await expandMessage(message);
-  let msg = expanded.content.message
-    if (expanded.expand.from.id === pb.authStore.model.id) {
-      msg = await decryptMessage(expanded.content.message, sk, expanded.expand.to.pubkey)
+  let msg = expanded.content
+    if (expanded.from.id === pb.authStore.model.id) {
+      msg = await decryptMessage(expanded.content, sk, expanded.to.pubkey)
     } else {
-      msg = await decryptMessage(expanded.content.message, sk, expanded.expand.from.pubkey)
+      msg = await decryptMessage(expanded.content, sk, expanded.from.pubkey)
     }
 
-      return { created: message.created, from: expanded.expand.from, to: expanded.expand.to, content: msg };
+      return { created: message.created, from: expanded.from, to: expanded.to, content: msg };
   }
 
-async function postMessage(msg: string, from: User, to: User) {
+async function postMessage(msg: string, from: User, to: User): Promise<Message> {
   let ciphertext = msg;
-  let privKey = null;
-  currentKey.subscribe((value) => privKey = value)
+  let privKey = await currentKey.load()
   if (privKey) {
     ciphertext = await nip04.encrypt(privKey, to.pubkey, msg);
   }
@@ -113,143 +114,107 @@ async function postMessage(msg: string, from: User, to: User) {
     to: to.id,
     content: JSON.stringify({ message: ciphertext }),
   };
-
-  await pb.collection('messages').create(data);
-}
-
-async function getUserByName(name: string): Promise<User> {
-  const user = (await pb.collection('users').getFirstListItem(`username="${name}"`)) as User;
-  return user;
+  try {
+    const msg = await pb.collection('messages').create(data) as MessageRecord;
+    return { from, to, content: msg.content.message, created: msg.created};
+  } catch {
+    return null
+  }
+  
 }
 
 async function getUserById(id: string): Promise<User> {
+  console.log(id)
   const user = (await pb.collection('users').getFirstListItem(`id="${id}"`)) as User;
   return user;
 }
 
-async function updateMessages(e) {
-  const from = await pb.collection('users').getFirstListItem(`id="${e.from}"`)
-  const to = await pb.collection('users').getFirstListItem(`id="${e.to}"`)
-  messages.update((msgs) => [...msgs, { ...e, expand: { to, from } }])
+async function fetchMessages(userId: string) : Promise<Message[]> {
+  try {
+    const rawMsg: RawMessage[] = await pb.collection('messages').getFullList({ expand: 'from,to', sort: '-created',
+    filter: `from="${userId}" || to="${userId}"`
+    });
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    const decrypted = await decryptMessages(rawMsg);
+    return decrypted;
+  } catch {
+    console.log("jow")
+    return [];
+  }
+  
 }
 
-async function expandMessage(m) {
-  const from = await pb.collection('users').getFirstListItem(`id="${m.from}"`)
-  const to = await pb.collection('users').getFirstListItem(`id="${m.to}"`)
-  return { ...m, expand: { to, from } }
+async function fetchAllMessages() : Promise<Message[]> {
+  try {
+    const rawMsg: RawMessage[] = await pb.collection('messages').getFullList({ expand: 'from,to', sort: 'created',
+    filter: `from="${pb.authStore.model.id}" || to="${pb.authStore.model.id}"`
+});
+    console.log(rawMsg)
+    const decrypted = await decryptMessages(rawMsg);
+    return decrypted;
+  } catch {
+    
+    return [];
+  }
+  
 }
 
-let url = ""
-
-if (Capacitor.getPlatform() === "web") {
-    url = 'https://damp-sky-8598.fly.dev'
-} else {
-    url = 'https://damp-sky-8598.fly.dev'
+async function fetchChatPartners() : Promise<{}> {
+  const messages = await fetchAllMessages();
+  console.log(messages)
+  const partners = new Map()
+    for (const msg of messages) {
+      if (msg.from.id !== pb.authStore.model.id && !partners[msg.from.id]) {
+        partners.set(msg.from.id, { user: msg.from, latest: msg.created, content: msg.content })
+      } else if (msg.to.id !== pb.authStore.model.id && !partners[msg.to.id]) {
+        partners.set(msg.to.id, { user: msg.to, latest: msg.created, content: msg.content })
+      }
+    }
+    return partners;
 }
+
+// async function updateMessages(e) {
+//   const from = await pb.collection('users').getFirstListItem(`id="${e.from}"`)
+//   const to = await pb.collection('users').getFirstListItem(`id="${e.to}"`)
+//   messages.update((msgs) => [...msgs, { ...e, expand: { to, from } }])
+// }
+
+async function expandMessage(m: MessageRecord): Promise<Message> {
+  const from = await pb.collection('users').getFirstListItem(`id="${m.from}"`) as User
+  const to = await pb.collection('users').getFirstListItem(`id="${m.to}"`) as User
+  return { ...m, to, from, content: m.content.message }
+}
+
+let url = 'https://damp-sky-8598.fly.dev'
+
 
 const pb = new PocketBase(url);
 
+//const currentUser = writable<User>(null)
 const currentUser = writable<User>(null)
 
-const currentKey = asyncWritable(
-  currentUser,
-  async ($currentUser) => {
-    if ($currentUser === null) {
-      return null;
+//const queryClient = useQueryClient();
+const currentKey = asyncWritable([], async () => {
+    const key = getSecureKey(`${pb.authStore.model.username}-sk`);
+    return key;
+  }, 
+  async (newKey) => {
+    const key = setSecureKey(`${pb.authStore.model.username}-sk`, newKey);
+    if (key) {
+      return newKey
     }
-    const key = await getSecureKey(`${$currentUser.username}-sk`)
-    return key.value
-  },
-  async (newKey, $currentUser) => {
-    const key = await setSecureKey(`${$currentUser.username}-sk`, newKey)
-    return key.value;
-  }
-);
+    return null;
+  } 
+  );
 
 const isAuthenticated = derived([currentKey, currentUser], ([$key, $user]) => {
   return $user && $key;
 });
 
-const currentChatPartner = asyncable(async ($params) => {
-  try {
-    const user = await getUserById($params['user']);
-    return user
-  } catch {
-    return null;
-  }
-}, null, [  params ]);
-
-const messages_old = asyncable(async () => {
-  const msg = await getMessages();
-  const dec = await decryptMessages(msg);
-  return dec;
-}, [], [ currentKey, currentUser]);
-
-const messages = asyncWritable(
-  [currentUser, currentKey],
-  async ($currentUser) => {
-    if ($currentUser === null) {
-      return [];
-    }
-    const msg = await getMessages();
-    const dec = await decryptMessages(msg);
-    return dec;
-  }
-);
-
-const partners = asyncable(async ($messages) => {
-  const messages =  await $messages as Decrypted[];
-  const partners1 = messages.map(m => m.to);
-  const partners2 = messages.map(m => m.from);
-  const filteredList = filterUniqueByAttribute(partners1.concat(partners2), "id");
-
-  const partnersWithMessages = [] as ChatPartner[]
-
-  for (const partner of filteredList) {
-    for (const message of messages) {
-      if (message.from.id === partner.id) {
-        partnersWithMessages.push({ user: message.from, content: message.content, created: minutesAgoFromTimestamp(message.created)  });
-        break;
-      } else if (message.to.id === partner.id) {
-        partnersWithMessages.push({ user: message.to, content: message.content, created: minutesAgoFromTimestamp(message.created)  });
-        break;
-      }
-    }
-  }
-  return partnersWithMessages;
-  //TODO: make sure list is ordered and contains some extra metadata: last message, timestamp...
-},  [], [ messages ]) as Asyncable<ChatPartner[]>;
-
-const currentMessages = asyncable(async ($messages, $currentChatPartner) => {
-  const messages =  await $messages as Decrypted[];
-  const partner = await $currentChatPartner as User;
-  const filtered = messages.filter(m => m.from.id === partner.id || m.to.id === partner.id)
-  return filtered;
-},  [], [ messages, currentChatPartner ]) as Asyncable<Decrypted[]>;
-
-//initialisation
-async function setData() {
-  if (pb.authStore.isValid) {
-  try {
-    currentUser.set(pb.authStore.model as User);
-    //realtime & changes
-    pb.collection("messages").subscribe("*", async (e) => {const dec = await decryptIncoming(e.record); console.log("dec", dec.content); messages.update(msg => [dec, ...msg]) });
-  } catch {
-
-  }
-  } else {
-    currentUser.set(null);
-  }
- 
-}
-
-await setData();
-
-
 pb.authStore.onChange(async (auth) => {
     console.log("Auth Changed", auth);
-    await setData();
-})
+    currentUser.set(pb.authStore.model as User);
+}, true)
 
-export { pb, currentUser, currentKey, messages, partners, currentMessages, isAuthenticated, currentChatPartner, postMessage, createUser, loginUser, logoutUser }
-export type { User, Decrypted }
+export { pb, currentUser, currentKey, decryptIncoming, isAuthenticated, getUserById, fetchMessages, fetchAllMessages, fetchChatPartners, postMessage, createUser, loginUser, logoutUser }
+export type { User, Message, ChatPartner, MessageRecord }

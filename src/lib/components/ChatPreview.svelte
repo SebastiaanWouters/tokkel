@@ -2,7 +2,6 @@
   import { goto } from "elegua";
   import { activeChatTab } from "../nav";
   import Avatar from "./Avatar.svelte";
-  import { currentChatPartner } from "../pocketbase";
   import type { User } from "../pocketbase";
 
   export let user: User;

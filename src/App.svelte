@@ -19,6 +19,9 @@
   import Chats from "./screens/Chats.svelte";
   import Settings from "./screens/Settings.svelte";
   import { publicRoutes } from "./lib/utils";
+  import { QueryClientProvider, QueryClient } from "@sveltestack/svelte-query";
+
+  const queryClient = new QueryClient();
 
   let platform = Capacitor.getPlatform();
 
@@ -47,44 +50,51 @@
 <main
   class="bg-gray-50 dark:bg-neutral-900 mx-auto flex justify-center items-center min-h-screen h-screen"
 >
-  <OnMount>
-    <MobileContainer>
-      {#if $path === "/register"}
-        <div class="fill" in:fade><Register /></div>
-      {:else if resolve($path, "/home")}
-        <div class="fill" in:fade>
-          <NavLayout
-            ><div slot="topNav" />
-            <div slot="middle" class="fill"><Chats /></div>
-            <NavBar slot="bottomNav" /></NavLayout
-          >
-        </div>
-      {:else if resolve($path, "/chat/:user")}
-        <div class="fill">
-          <NavLayout
-            ><div slot="topNav" />
-            <div slot="middle" class="fill"><Chat /></div>
-            <div slot="bottomNav" /></NavLayout
-          >
-        </div>
-      {:else if resolve($path, "/settings")}
-        <div class="fill" in:fade>
-          <NavLayout
-            ><div slot="topNav" />
-            <div slot="middle" class="fill"><Settings /></div>
-            <NavBar slot="bottomNav" /></NavLayout
-          >
-        </div>
-      {:else if resolve($path, "/login")}
-        <div class="fill" in:fade>
-          <Login message={$searchParams.get("message")} />
-        </div>
-      {:else}
-        <h1>404</h1>
-        <p>Not found: {$path}</p>
-      {/if}
-    </MobileContainer>
-  </OnMount>
+  <QueryClientProvider client={queryClient}>
+    <OnMount>
+      <MobileContainer>
+        {#if !$isAuthenticated}
+          {#if $path === "/register"}
+            <div class="fill" in:fade><Register /></div>
+          {:else if resolve($path, "/login")}
+            <div class="fill" in:fade>
+              <Login message={$searchParams.get("message")} />
+            </div>
+          {/if}
+        {/if}
+        {#if $isAuthenticated}
+          {#if resolve($path, "/home")}
+            <div class="fill" in:fade>
+              <NavLayout
+                ><div slot="topNav" />
+                <div slot="middle" class="fill"><Chats /></div>
+                <NavBar slot="bottomNav" /></NavLayout
+              >
+            </div>
+          {:else if resolve($path, "/chat/:user")}
+            <div class="fill">
+              <NavLayout
+                ><div slot="topNav" />
+                <div slot="middle" class="fill"><Chat /></div>
+                <div slot="bottomNav" /></NavLayout
+              >
+            </div>
+          {:else if resolve($path, "/settings")}
+            <div class="fill" in:fade>
+              <NavLayout
+                ><div slot="topNav" />
+                <div slot="middle" class="fill"><Settings /></div>
+                <NavBar slot="bottomNav" /></NavLayout
+              >
+            </div>
+          {:else}
+            <h1>404</h1>
+            <p>Not found: {$path}</p>
+          {/if}
+        {/if}
+      </MobileContainer>
+    </OnMount>
+  </QueryClientProvider>
 </main>
 
 <style>

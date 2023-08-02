@@ -7,7 +7,6 @@
   import * as zod from "zod";
   import * as secp from "@noble/secp256k1";
   import Spinner from "../lib/components/spinner.svelte";
-  import { Link } from "svelte-routing";
   import { goto } from "elegua";
 
   const schema = zod.object({
