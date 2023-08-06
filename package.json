@@ -11,6 +11,7 @@
   },
   "devDependencies": {
     "@skeletonlabs/skeleton": "^1.10.0",
+    "@svelte-put/clickoutside": "^3.0.0",
     "@sveltejs/vite-plugin-svelte": "^2.4.2",
     "@tsconfig/svelte": "^5.0.0",
     "autoprefixer": "^10.4.14",

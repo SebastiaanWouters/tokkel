@@ -37,6 +37,7 @@
     style="overflow-wrap: break-word;"
     class:rounded-bl-lg={owner}
     class:rounded-br-lg={!owner}
+    class:bg-neutral-700={!owner}
     class:bg-primary-700={owner}
   >
     {message.content}

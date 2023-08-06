@@ -88,6 +88,7 @@ function filterUniqueByAttribute<T>(list: T[], attribute: keyof T): T[] {
 }
 
 function minutesAgoFromTimestamp(timestampString: string): string {
+  console.log(timestampString)
   const timestamp = Date.parse(timestampString);
   if (isNaN(timestamp)) {
     throw new Error("Invalid timestamp format");

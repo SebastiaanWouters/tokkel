@@ -1,9 +1,6 @@
 <script lang="ts">
   import { useQuery } from "@sveltestack/svelte-query";
-  import {
-    convertStringMapToList,
-    minutesAgoFromTimestamp,
-  } from "../lib/utils";
+  import { convertStringMapToList } from "../lib/utils";
   import ChatPreview from "../lib/components/ChatPreview.svelte";
   import {
     currentUser,
@@ -12,6 +9,7 @@
   } from "../lib/pocketbase";
   import { PenSquare } from "lucide-svelte";
   import NewChat from "../lib/components/NewChat.svelte";
+  import { clickoutside } from "@svelte-put/clickoutside";
 
   const partners = useQuery<ChatPartner[]>(
     [$currentUser.id, "partners"],
@@ -41,7 +39,7 @@
   >
     <h1 class="font-semibold text-gray-300">Chats</h1>
     <button
-      on:click={() => {
+      on:click|stopPropagation={() => {
         open = true;
       }}
       class="cursor-pointer"><PenSquare size={18} /></button
@@ -53,10 +51,18 @@
         <ChatPreview
           user={partner.user}
           content={partner.content}
-          date={minutesAgoFromTimestamp(partner.latest)}
+          date={partner.latest}
         />
       {/each}
     {/if}
   </div>
-  <NewChat bind:open />
+
+  <div
+    use:clickoutside
+    on:clickoutside={() => {
+      open = false;
+    }}
+  >
+    <NewChat bind:open />
+  </div>
 </div>

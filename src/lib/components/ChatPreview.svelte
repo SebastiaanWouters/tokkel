@@ -2,11 +2,29 @@
   import { goto } from "elegua";
   import Avatar from "./Avatar.svelte";
   import type { User } from "../pocketbase";
-  import { truncateContent } from "../utils";
+  import { minutesAgoFromTimestamp, truncateContent } from "../utils";
+  import { onDestroy, onMount } from "svelte";
 
   export let user: User;
   export let content: string;
   export let date: string;
+
+  let minutesAgo = minutesAgoFromTimestamp(date);
+
+  // Function to update the minutesAgo value
+  const updateMinutesAgo = () => {
+    minutesAgo = minutesAgoFromTimestamp(date);
+  };
+
+  let interval;
+  onMount(() => {
+    interval = setInterval(updateMinutesAgo, 20000); // 60 seconds
+  });
+
+  // Clear the interval when the component is destroyed
+  onDestroy(() => {
+    clearInterval(interval);
+  });
 </script>
 
 <button
@@ -28,6 +46,6 @@
     </div>
   </div>
   <div class="flex flex-col">
-    <p class="text-xs text-white/60">{date}</p>
+    <p class="text-xs text-white/60">{minutesAgo}</p>
   </div>
 </button>
