@@ -50,11 +50,12 @@ interface RawMessage {
         const sk = await privKeyFromEntropy(password, username);
         const pk = getPublicKey(sk);
         const response = await pb.collection("users").authWithPassword(username, password);
-        setSecureKey(`${pb.authStore.model.username}-sk`, sk)
+        setSecureKey(pb.authStore.model.id, sk)
         await pb.collection('users').update(response.record.id, { pubkey: pk });
       }
 
   async function logoutUser() {
+    setSecureKey(pb.authStore.model.id, null)
     pb.authStore.clear();
   }
 
@@ -70,41 +71,38 @@ async function decryptMessage(msg: string, sk: string, pk: string) {
 }
 
 async function decryptMessages(messages: RawMessage[]): Promise<Message[]> {
-  console.log(messages)
-  let sk = await currentKey.load()
-  console.log(sk)
+  let sk = await getSecureKey(pb.authStore.model.id)
   const decrypt = [];
   for (const msg of messages) {
-    let dec = msg.content.message
-    console.log(dec)
+    let dec = msg.content?.message ?? 'fail'
     if (msg.expand.from.id === pb.authStore.model.id) {
       dec = await decryptMessage(msg.content.message, sk, msg.expand.to.pubkey)
     } else {
       dec = await decryptMessage(msg.content.message, sk, msg.expand.from.pubkey)
     }
+    console.log("new message decrypted: " + dec)
     decrypt.push({ created: msg.created, from: msg.expand.from, to: msg.expand.to, content: dec })
+    
   }
-  console.log(decrypt)
   return decrypt;
   
 }
 
-async function decryptIncoming(message: MessageRecord, from: User, to: User): Promise<Message> {
-  let sk = await currentKey.load()
-  const expanded = await expandMessage(message);
-  let msg = expanded.content
-    if (expanded.from.id === pb.authStore.model.id) {
-      msg = await decryptMessage(expanded.content, sk, expanded.to.pubkey)
+async function decryptRealtime(message: Message): Promise<Message> {
+  let sk = await getSecureKey(pb.authStore.model.id)
+  let content = message.content
+    if (message.from.id === pb.authStore.model.id) {
+      content = await decryptMessage(message.content, sk, message.to.pubkey)
     } else {
-      msg = await decryptMessage(expanded.content, sk, expanded.from.pubkey)
+      content = await decryptMessage(message.content, sk, message.from.pubkey)
     }
 
-      return { created: message.created, from: expanded.from, to: expanded.to, content: msg };
+      return { ...message, content };
   }
 
 async function postMessage(msg: string, from: User, to: User): Promise<Message> {
   let ciphertext = msg;
-  let privKey = await currentKey.load()
+  let privKey = await getSecureKey(pb.authStore.model.id)
   if (privKey) {
     ciphertext = await nip04.encrypt(privKey, to.pubkey, msg);
   }
@@ -124,50 +122,68 @@ async function postMessage(msg: string, from: User, to: User): Promise<Message> 
 }
 
 async function getUserById(id: string): Promise<User> {
-  console.log(id)
   const user = (await pb.collection('users').getFirstListItem(`id="${id}"`)) as User;
   return user;
 }
 
-async function fetchMessages(userId: string) : Promise<Message[]> {
+async function getUserByName(name: string): Promise<User> {
   try {
+    const user = (await pb.collection('users').getFirstListItem(`username="${name}"`)) as User;
+    return user;
+  } catch {
+    return null;
+  }
+  
+}
+
+async function fetchMessages(userId: string) : Promise<Message[]> {
+   try {
     const rawMsg: RawMessage[] = await pb.collection('messages').getFullList({ expand: 'from,to', sort: '-created',
-    filter: `from="${userId}" || to="${userId}"`
+    filter: `(from="${userId}" || to="${userId}") && (to="${pb.authStore.model.id}" || from="${pb.authStore.model.id}")`
     });
-    await new Promise(resolve => setTimeout(resolve, 1000));
     const decrypted = await decryptMessages(rawMsg);
+    console.log(decrypted)
     return decrypted;
   } catch {
-    console.log("jow")
     return [];
   }
   
 }
 
 async function fetchAllMessages() : Promise<Message[]> {
+  console.log("User when fetching messages: " + pb.authStore.model.username)
   try {
-    const rawMsg: RawMessage[] = await pb.collection('messages').getFullList({ expand: 'from,to', sort: 'created',
-    filter: `from="${pb.authStore.model.id}" || to="${pb.authStore.model.id}"`
-});
-    console.log(rawMsg)
+    const rawMsg: RawMessage[] = await pb.collection('messages').getFullList({ expand: 'from,to', sort: '-created',
+    filter: `from="${pb.authStore.model.id}" || to="${pb.authStore.model.id}"`, '$autoCancel': false
+    });
+    for (const msg of rawMsg) {
+      console.log("new message found")
+      break;
+    }
     const decrypted = await decryptMessages(rawMsg);
     return decrypted;
   } catch {
-    
-    return [];
+      return [];
   }
   
 }
 
 async function fetchChatPartners() : Promise<{}> {
   const messages = await fetchAllMessages();
-  console.log(messages)
+   for (const msg of messages) {
+      console.log("new message found while getting partners")
+      break;
+    }
   const partners = new Map()
     for (const msg of messages) {
-      if (msg.from.id !== pb.authStore.model.id && !partners[msg.from.id]) {
+      if (msg.from.id !== pb.authStore.model.id) {
         partners.set(msg.from.id, { user: msg.from, latest: msg.created, content: msg.content })
-      } else if (msg.to.id !== pb.authStore.model.id && !partners[msg.to.id]) {
+        console.log("new partner: " + msg.from.username + " " + msg.created)
+        break;
+      } else if (msg.to.id !== pb.authStore.model.id) {
         partners.set(msg.to.id, { user: msg.to, latest: msg.created, content: msg.content })
+         console.log("new partner: " + msg.to.username + " " + msg.created)
+         break;
       }
     }
     return partners;
@@ -187,34 +203,16 @@ async function expandMessage(m: MessageRecord): Promise<Message> {
 
 let url = 'https://damp-sky-8598.fly.dev'
 
-
 const pb = new PocketBase(url);
 
 //const currentUser = writable<User>(null)
 const currentUser = writable<User>(null)
 
-//const queryClient = useQueryClient();
-const currentKey = asyncWritable([], async () => {
-    const key = getSecureKey(`${pb.authStore.model.username}-sk`);
-    return key;
-  }, 
-  async (newKey) => {
-    const key = setSecureKey(`${pb.authStore.model.username}-sk`, newKey);
-    if (key) {
-      return newKey
-    }
-    return null;
-  } 
-  );
-
-const isAuthenticated = derived([currentKey, currentUser], ([$key, $user]) => {
-  return $user && $key;
-});
 
 pb.authStore.onChange(async (auth) => {
-    console.log("Auth Changed", auth);
+    console.log("Auth Changed");
     currentUser.set(pb.authStore.model as User);
 }, true)
 
-export { pb, currentUser, currentKey, decryptIncoming, isAuthenticated, getUserById, fetchMessages, fetchAllMessages, fetchChatPartners, postMessage, createUser, loginUser, logoutUser }
+export { pb, currentUser, decryptRealtime, getUserByName, expandMessage, getUserById, fetchMessages, fetchAllMessages, fetchChatPartners, postMessage, createUser, loginUser, logoutUser }
 export type { User, Message, ChatPartner, MessageRecord }

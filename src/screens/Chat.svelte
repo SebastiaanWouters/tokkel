@@ -1,26 +1,25 @@
 <script lang="ts">
-  import { goto, params } from "elegua";
+  import { goto, params, oldUrl } from "elegua";
   import {
     postMessage,
     currentUser,
-    fetchMessages,
     type Message,
     getUserById,
-    pb,
     type User,
-    type MessageRecord,
-    decryptIncoming,
+    fetchAllMessages,
   } from "../lib/pocketbase";
-  import {
-    useQuery,
-    useMutation,
-    useQueryClient,
-  } from "@sveltestack/svelte-query";
+  import { useQuery } from "@sveltestack/svelte-query";
   import ChatBubble from "../lib/components/ChatBubble.svelte";
+  import { ChevronLeftCircle } from "lucide-svelte";
+  import TopBar from "../lib/components/TopBar.svelte";
+  import Avatar from "../lib/components/Avatar.svelte";
+  import { SendHorizonal } from "lucide-svelte";
 
   const messages = useQuery<Message[]>(
-    [$params["user"], $currentUser.id, "messages"],
-    () => fetchMessages($params["user"]),
+    [$currentUser.id, "messages"],
+    () => {
+      return fetchAllMessages();
+    },
     {
       staleTime: Infinity,
       refetchOnMount: false,
@@ -28,7 +27,7 @@
   );
 
   const currentChatPartner = useQuery<User>(
-    [$params["user"], $currentUser.id, "currentPartner"],
+    [$params["user"], "currentPartner"],
     () => getUserById($params["user"]),
     {
       staleTime: Infinity,
@@ -36,84 +35,74 @@
     }
   );
 
-  let message = "";
-
-  const queryClient = useQueryClient();
-
-  pb.collection("messages").subscribe("*", function (e) {
-    console.log(e.action);
-    if (e.record.from !== $currentUser.id || true) {
-      $mutIn.mutate(e.record as MessageRecord);
-    }
-  });
-
-  const mut = useMutation(sendMessage, {
-    onSuccess: (data) => {
-      queryClient.setQueryData(
-        [$params["user"], data.from.id, "messages"],
-        (oldMsg: Message[]) => [data, ...oldMsg]
-      );
-    },
-  });
-
-  const mutIn = useMutation(processIncoming, {
-    onSuccess: (data) => {
-      queryClient.setQueryData(
-        [$params["user"], data.from.id, "messages"],
-        (oldMsg: Message[]) => [data, ...oldMsg]
-      );
-    },
-  });
-
-  async function processIncoming(msg: MessageRecord): Promise<Message> {
-    const processed = await decryptIncoming(
-      msg,
-      $currentUser,
-      $currentChatPartner.data
+  $: currentMessages = $messages.data?.filter((msg) => {
+    return (
+      (msg.from.id === $currentUser.id || msg.to.id === $currentUser.id) &&
+      (msg.from.id === $params["user"] || msg.to.id === $params["user"])
     );
-    if (processed) {
-      return processed;
-    }
-  }
+  });
 
   async function sendMessage(msg: string): Promise<Message> {
-    const sentMsg = await postMessage(
-      msg,
-      $currentUser,
-      $currentChatPartner.data
-    );
-    if (sentMsg) {
-      return { ...sentMsg, content: msg };
+    if (msg) {
+      const sentMsg = await postMessage(
+        msg,
+        $currentUser,
+        $currentChatPartner.data
+      );
+      if (sentMsg) {
+        message = "";
+        return { ...sentMsg, content: msg };
+      }
     }
   }
+
+  async function handleKeyDown(e) {
+    switch (e.keyCode) {
+      case 13:
+        sendMessage(message);
+    }
+  }
+
+  let message = "";
 </script>
 
 <div class="fill max-h-screen grid grid-rows-[auto_1fr_auto]">
-  <div
-    class="h-12 w-full flex justify-between items-center px-4 border-white/5 border-b"
-  >
-    <button on:click={() => goto("/home")}>{"<"}</button>
+  <TopBar>
+    <button on:click={() => goto("/chat")}
+      ><ChevronLeftCircle strokeWidth={1.7} /></button
+    >
     {#if $currentChatPartner.isLoading}
       <span>Loading...</span>
     {:else if $currentChatPartner.error}
       <span>An error has occurred</span>
     {:else}
-      <p>{$currentChatPartner.data.username}</p>
+      <div class="flex items-center gap-2">
+        <p>{$currentChatPartner.data.username}</p>
+        <Avatar />
+      </div>
     {/if}
-  </div>
+  </TopBar>
   <div class="p-4 flex-col-reverse overflow-auto flex gap-2">
     {#if $messages.isLoading}
       <span>Loading...</span>
     {:else if $messages.error}
       <span>An error has occurred</span>
     {:else}
-      {#each $messages.data as message}
+      {#each currentMessages as message (message)}
         <ChatBubble {message} />
       {/each}
     {/if}
   </div>
   <div class="flex gap-4 justify-between p-4 h-fit w-full">
-    <input class="bg-transparent w-full" type="text" bind:value={message} />
-    <button on:click={() => $mut.mutate(message)}>Send</button>
+    <input
+      on:keydown={(e) => handleKeyDown(e)}
+      id="text-input"
+      class=" bg-transparent w-full outline-none focus:ring-primary-600 focus:border-primary-600 rounded"
+      type="text"
+      bind:value={message}
+    />
+    <button id="send-button" on:click={() => sendMessage(message)}
+      ><SendHorizonal /></button
+    >
   </div>
 </div>

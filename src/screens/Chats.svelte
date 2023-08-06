@@ -1,12 +1,7 @@
 <script lang="ts">
-  import {
-    useQuery,
-    useQueryClient,
-    type QueryKey,
-  } from "@sveltestack/svelte-query";
+  import { useQuery } from "@sveltestack/svelte-query";
   import {
     convertStringMapToList,
-    mapDataToListOfMessages,
     minutesAgoFromTimestamp,
   } from "../lib/utils";
   import ChatPreview from "../lib/components/ChatPreview.svelte";
@@ -14,18 +9,21 @@
     currentUser,
     fetchChatPartners,
     type ChatPartner,
-    type Message,
-    fetchAllMessages,
   } from "../lib/pocketbase";
+  import { PenSquare } from "lucide-svelte";
+  import NewChat from "../lib/components/NewChat.svelte";
 
-  const queryClient = useQueryClient();
-
-  const partners = useQuery<ChatPartner[]>([$currentUser], fetchPartners, {
-    staleTime: Infinity,
-    refetchOnMount: false,
-  });
+  const partners = useQuery<ChatPartner[]>(
+    [$currentUser.id, "partners"],
+    fetchPartners,
+    {
+      staleTime: Infinity,
+      refetchOnMount: false,
+    }
+  );
 
   async function fetchPartners(): Promise<ChatPartner[]> {
+    console.log("fetching partners for this user: " + $currentUser.id);
     const partners = await fetchChatPartners();
     const partnersArray = convertStringMapToList(
       partners,
@@ -33,11 +31,21 @@
     ) as ChatPartner[];
     return partnersArray;
   }
+
+  let open = false;
 </script>
 
 <div class="fill grid grid-rows-[auto_1fr]">
-  <div class="w-full p-3 font-semibold text-gray-300 border-white/5 border-b">
-    Chats
+  <div
+    class="w-full p-3 border-white/5 border-b flex justify-between items-center"
+  >
+    <h1 class="font-semibold text-gray-300">Chats</h1>
+    <button
+      on:click={() => {
+        open = true;
+      }}
+      class="cursor-pointer"><PenSquare size={18} /></button
+    >
   </div>
   <div class="flex flex-col gap-2">
     {#if $partners.status === "success"}
@@ -50,4 +58,5 @@
       {/each}
     {/if}
   </div>
+  <NewChat bind:open />
 </div>

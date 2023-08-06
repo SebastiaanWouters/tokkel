@@ -1,17 +1,12 @@
 <script lang="ts">
   import { Capacitor } from "@capacitor/core";
-  import {
-    pb,
-    currentUser,
-    currentKey,
-    isAuthenticated,
-  } from "./lib/pocketbase";
+  import { pb, currentUser } from "./lib/pocketbase";
   import { path, resolve, params, match, goto, searchParams } from "elegua";
   import Login from "./screens/Login.svelte";
   import Register from "./screens/Register.svelte";
   import Chat from "./screens/Chat.svelte";
   import { onMount } from "svelte";
-  import { fade } from "svelte/transition";
+  import { fade, fly } from "svelte/transition";
   import { OnMount } from "fractils";
   import MobileContainer from "./lib/components/MobileContainer.svelte";
   import NavLayout from "./screens/NavLayout.svelte";
@@ -20,25 +15,26 @@
   import Settings from "./screens/Settings.svelte";
   import { publicRoutes } from "./lib/utils";
   import { QueryClientProvider, QueryClient } from "@sveltestack/svelte-query";
+  import RealtimeProvider from "./lib/components/RealtimeProvider.svelte";
+  import ChatProvider from "./lib/components/ChatProvider.svelte";
 
   const queryClient = new QueryClient();
 
   let platform = Capacitor.getPlatform();
 
   onMount(() => {
-    console.log($currentUser);
+    console.log("current user: " + $currentUser.id);
     if (
       ($path.endsWith("/login") || $path.endsWith("/register")) &&
-      $currentUser &&
-      $currentKey
+      $currentUser
     ) {
-      goto("/home");
+      goto("/chat");
     }
   });
 
-  $: if ($isAuthenticated) {
+  $: if ($currentUser) {
     if ($path.includes(publicRoutes[0]) || $path.includes(publicRoutes[1])) {
-      goto("/home");
+      goto("/chat");
     }
   } else {
     if (!($path.includes(publicRoutes[0]) || $path.includes(publicRoutes[1]))) {
@@ -53,44 +49,52 @@
   <QueryClientProvider client={queryClient}>
     <OnMount>
       <MobileContainer>
-        {#if !$isAuthenticated}
-          {#if $path === "/register"}
-            <div class="fill" in:fade><Register /></div>
-          {:else if resolve($path, "/login")}
-            <div class="fill" in:fade>
-              <Login message={$searchParams.get("message")} />
-            </div>
-          {/if}
+        {#if !$currentUser}
+          <div class="fill" in:fade>
+            {#if $path === "/register"}
+              <div class="fill" in:fade><Register /></div>
+            {:else if resolve($path, "/login")}
+              <div class="fill" in:fade>
+                <Login message={$searchParams.get("message")} />
+              </div>
+            {/if}
+          </div>
         {/if}
-        {#if $isAuthenticated}
-          {#if resolve($path, "/home")}
-            <div class="fill" in:fade>
-              <NavLayout
-                ><div slot="topNav" />
-                <div slot="middle" class="fill"><Chats /></div>
-                <NavBar slot="bottomNav" /></NavLayout
-              >
-            </div>
-          {:else if resolve($path, "/chat/:user")}
-            <div class="fill">
-              <NavLayout
-                ><div slot="topNav" />
-                <div slot="middle" class="fill"><Chat /></div>
-                <div slot="bottomNav" /></NavLayout
-              >
-            </div>
-          {:else if resolve($path, "/settings")}
-            <div class="fill" in:fade>
-              <NavLayout
-                ><div slot="topNav" />
-                <div slot="middle" class="fill"><Settings /></div>
-                <NavBar slot="bottomNav" /></NavLayout
-              >
-            </div>
-          {:else}
-            <h1>404</h1>
-            <p>Not found: {$path}</p>
-          {/if}
+
+        {#if $currentUser}
+          <ChatProvider>
+            <RealtimeProvider>
+              <div class="fill" in:fade>
+                {#if resolve($path, "/chat")}
+                  <div class="fill">
+                    <NavLayout
+                      ><div slot="topNav" />
+                      <div slot="middle" class="fill"><Chats /></div>
+                      <NavBar slot="bottomNav" />
+                    </NavLayout>
+                  </div>
+                {:else if resolve($path, "/chat/:user")}
+                  <div class="fill">
+                    <NavLayout
+                      ><div slot="topNav" />
+                      <div slot="middle" class="fill"><Chat /></div>
+                    </NavLayout>
+                  </div>
+                {:else if resolve($path, "/settings")}
+                  <div class="fill">
+                    <NavLayout
+                      ><div slot="topNav" />
+                      <div slot="middle" class="fill"><Settings /></div>
+                      <NavBar slot="bottomNav" /></NavLayout
+                    >
+                  </div>
+                {:else}
+                  <h1>404</h1>
+                  <p>Not found: {$path}</p>
+                {/if}
+              </div>
+            </RealtimeProvider>
+          </ChatProvider>
         {/if}
       </MobileContainer>
     </OnMount>

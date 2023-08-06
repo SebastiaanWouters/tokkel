@@ -2,7 +2,6 @@
   import NavItem from "./NavItem.svelte";
   import { Settings, Home } from "lucide-svelte";
   import { path } from "elegua";
-  import { activeTab } from "../nav";
   import { goto } from "elegua";
 </script>
 
@@ -11,12 +10,12 @@
     <button
       class="cursor-pointer contents"
       on:click={() => {
-        goto("/home");
+        goto("/chat");
       }}
     >
       <Home
         class="transition-all"
-        color={$path === "/home" ? "white" : "gray"}
+        color={$path === "/chat" ? "white" : "gray"}
       />
       <p class="transition-all" class:text-gray-400={!($path === "/home")}>
         Home

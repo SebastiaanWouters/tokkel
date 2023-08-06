@@ -2,6 +2,7 @@ import { SecureStoragePlugin } from 'capacitor-secure-storage-plugin';
 import * as secp from "@noble/secp256k1";
 import hkdf from '@panva/hkdf'
 import { intlFormatDistance } from 'date-fns';
+import { string } from 'zod';
 
 const publicRoutes = ["/login", "/register"]
 
@@ -10,15 +11,14 @@ type Response = {
     error: boolean
 }
 
-async function setSecureKey(key: string, value: string): Promise<boolean> {
+async function setSecureKey(userId: string, value: string): Promise<boolean> {
     
-        const res = await SecureStoragePlugin.set({ key, value })
+        const res = await SecureStoragePlugin.set({ key: `${userId}-sk`, value })
         return res.value;
 }
 
-async function getSecureKey(key: string): Promise<string> {
-  
-        const value = await SecureStoragePlugin.get({ key })
+async function getSecureKey(userId: string): Promise<string> {
+        const value = await SecureStoragePlugin.get({ key: `${userId}-sk` })
         return value.value;
    
 }
@@ -50,8 +50,7 @@ function mapDataToListOfMessages(data) {
 }
 
 function convertStringMapToList(stringMap, sortByProperty) {
-  // Step 1: Parse the string representation of the map into an object
-  
+  // Step 1: Parse the string representation of the map into an object  
 
   // Step 2: Convert the object's values into an array of objects
   const arrayOfObjects = Array.from(stringMap.values())
@@ -59,10 +58,15 @@ function convertStringMapToList(stringMap, sortByProperty) {
   // Step 3: Sort the array of objects based on the desired property
   arrayOfObjects.sort((b, a) => Date.parse(a[sortByProperty]) - Date.parse(b[sortByProperty]));
 
-  console.log(arrayOfObjects)
-
   return arrayOfObjects;
 }
+
+ function truncateContent(content, maxLength) {
+    if (content && content.length > maxLength) {
+      return content.substring(0, maxLength) + "...";
+    }
+    return content;
+  }
 
 
 const fromHexString = (hexString) =>
@@ -93,5 +97,5 @@ function minutesAgoFromTimestamp(timestampString: string): string {
 
 }
 
-export { getSecureKey, publicRoutes, setSecureKey, mapDataToListOfMessages, convertStringMapToList, minutesAgoFromTimestamp, privKeyFromEntropy, fromHexString, toHexString, filterUniqueByAttribute };
+export { getSecureKey, publicRoutes, truncateContent, setSecureKey, mapDataToListOfMessages, convertStringMapToList, minutesAgoFromTimestamp, privKeyFromEntropy, fromHexString, toHexString, filterUniqueByAttribute };
 export type { Response };
