@@ -25,7 +25,9 @@
   onMount(() => {
     console.log("current user: " + $currentUser.id);
     if (
-      ($path.endsWith("/login") || $path.endsWith("/register")) &&
+      ($path.endsWith("/login") ||
+        $path.endsWith("/register") ||
+        $path.endsWith("/")) &&
       $currentUser
     ) {
       goto("/chat");
@@ -65,11 +67,15 @@
           <ChatProvider>
             <RealtimeProvider>
               <div class="fill" in:fade>
-                {#if resolve($path, "/chat")}
+                {#if resolve($path, "/chat") || resolve($path, "/settings")}
                   <div class="fill">
                     <NavLayout
                       ><div slot="topNav" />
-                      <div slot="middle" class="fill"><Chats /></div>
+                      <div slot="middle" class="fill">
+                        {#if resolve($path, "/chat")}<Chats
+                          />{:else if resolve($path, "/settings")}<Settings
+                          />{/if}
+                      </div>
                       <NavBar slot="bottomNav" />
                     </NavLayout>
                   </div>
@@ -79,14 +85,6 @@
                       ><div slot="topNav" />
                       <div slot="middle" class="fill"><Chat /></div>
                     </NavLayout>
-                  </div>
-                {:else if resolve($path, "/settings")}
-                  <div class="fill">
-                    <NavLayout
-                      ><div slot="topNav" />
-                      <div slot="middle" class="fill"><Settings /></div>
-                      <NavBar slot="bottomNav" /></NavLayout
-                    >
                   </div>
                 {:else}
                   <h1>404</h1>

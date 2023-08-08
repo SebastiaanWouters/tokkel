@@ -1,12 +1,9 @@
-import { Capacitor } from "@capacitor/core";
-import { derived, writable } from "svelte/store";
+import { writable } from "svelte/store";
 import { Record, Admin } from "pocketbase";
 import { getPublicKey, nip04 } from "nostr-tools";
-import { params, goto } from "elegua";
-import { asyncDerived, asyncWritable } from "@square/svelte-store";
 
 import PocketBase, { type ClientResponseError } from 'pocketbase';
-import { filterUniqueByAttribute, fromHexString, getSecureKey, privKeyFromEntropy, setSecureKey, toHexString, minutesAgoFromTimestamp } from "./utils";
+import { getSecureKey, privKeyFromEntropy, setSecureKey } from "./utils";
 
 interface User extends Record {
   username: string;
@@ -20,19 +17,20 @@ interface ChatPartner {
 }
 
 interface MessageRecord extends Record {
-  content: { message: string }
+  content: { message: string, image?: string }
 }
 
 interface Message {
   to: User; 
   from: User;
   content: string;
+  image?: string;
   created: string;
 
 }
 
 interface RawMessage {
-  content: { message: string };
+  content: { message: string, image?: string };
   created: string;
   expand: { from: User, to: User }
 }
@@ -74,14 +72,35 @@ async function decryptMessages(messages: RawMessage[]): Promise<Message[]> {
   let sk = await getSecureKey(pb.authStore.model.id)
   const decrypt = [];
   for (const msg of messages) {
-    let dec = msg.content?.message ?? 'fail'
+    let decMsg = msg.content?.message ?? 'undefined'
+    let decImg = msg.content?.image ?? undefined
     if (msg.expand.from.id === pb.authStore.model.id) {
-      dec = await decryptMessage(msg.content.message, sk, msg.expand.to.pubkey)
+      try {
+        decMsg = await decryptMessage(msg.content.message, sk, msg.expand.to.pubkey)
+        
+      } catch {
+        decMsg="Failed Decrypting"
+      }
+      try {
+          decImg = await decryptMessage(msg.content.image, sk, msg.expand.to.pubkey)
+          console.log(decImg)
+      } catch {
+
+      }
     } else {
-      dec = await decryptMessage(msg.content.message, sk, msg.expand.from.pubkey)
+      try {
+        decMsg = await decryptMessage(msg.content.message, sk, msg.expand.from.pubkey)
+        
+      } catch {
+        decMsg="Failed Decrypting"
+      }
+      try {
+        decImg = await decryptMessage(msg.content.image, sk, msg.expand.from.pubkey)
+      } catch {}
+      
     }
-    console.log("new message decrypted: " + dec)
-    decrypt.push({ created: msg.created, from: msg.expand.from, to: msg.expand.to, content: dec })
+    console.log("new message decrypted: " + decMsg)
+    decrypt.push({ created: msg.created, from: msg.expand.from, to: msg.expand.to, content: decMsg, image: decImg })
     
   }
   return decrypt;
@@ -90,31 +109,54 @@ async function decryptMessages(messages: RawMessage[]): Promise<Message[]> {
 
 async function decryptRealtime(message: Message): Promise<Message> {
   let sk = await getSecureKey(pb.authStore.model.id)
-  let content = message.content
+  let decMsg = message.content;
+  let decImg= message.image ?? undefined;
     if (message.from.id === pb.authStore.model.id) {
-      content = await decryptMessage(message.content, sk, message.to.pubkey)
+      try {
+         decMsg = await decryptMessage(message.content, sk, message.to.pubkey)
+      } catch {
+        decMsg = "decrypting realtime failed"
+      }
+      try {
+        decImg= await decryptMessage(message.image, sk, message.to.pubkey)
+      } catch {
+
+      }
     } else {
-      content = await decryptMessage(message.content, sk, message.from.pubkey)
+      try {
+        decMsg = await decryptMessage(message.content, sk, message.from.pubkey)
+      } catch {
+        decMsg = "decrypting realtime failed"
+      }
+      try {
+        decImg = await decryptMessage(message.image, sk, message.from.pubkey)
+      } catch {
+
+      }
     }
 
-      return { ...message, content };
+      return { ...message, content: decMsg, image: decImg };
   }
 
-async function postMessage(msg: string, from: User, to: User): Promise<Message> {
+async function postMessage(msg: string, from: User, to: User, image: string = undefined): Promise<Message> {
   let ciphertext = msg;
+  let encryptedImg = image;
   let privKey = await getSecureKey(pb.authStore.model.id)
   if (privKey) {
     ciphertext = await nip04.encrypt(privKey, to.pubkey, msg);
+    if (encryptedImg) {
+      encryptedImg = await nip04.encrypt(privKey, to.pubkey, image);
+    }
   }
-  // example create data
+  // create data to post to pocketbase as message
   const data = {
     from: from.id,
     to: to.id,
-    content: JSON.stringify({ message: ciphertext }),
+    content: JSON.stringify({ message: ciphertext, image: encryptedImg }),
   };
   try {
     const msg = await pb.collection('messages').create(data) as MessageRecord;
-    return { from, to, content: msg.content.message, created: msg.created};
+    return { from, to, content: msg.content.message, image: msg.content.image, created: msg.created};
   } catch {
     return null
   }
@@ -189,16 +231,11 @@ async function fetchChatPartners() : Promise<{}> {
     return partners;
 }
 
-// async function updateMessages(e) {
-//   const from = await pb.collection('users').getFirstListItem(`id="${e.from}"`)
-//   const to = await pb.collection('users').getFirstListItem(`id="${e.to}"`)
-//   messages.update((msgs) => [...msgs, { ...e, expand: { to, from } }])
-// }
 
 async function expandMessage(m: MessageRecord): Promise<Message> {
   const from = await pb.collection('users').getFirstListItem(`id="${m.from}"`) as User
   const to = await pb.collection('users').getFirstListItem(`id="${m.to}"`) as User
-  return { ...m, to, from, content: m.content.message }
+  return { ...m, to, from, content: m.content.message, image: m.content.image }
 }
 
 let url = 'https://damp-sky-8598.fly.dev'

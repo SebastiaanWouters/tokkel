@@ -12,9 +12,11 @@
   let minutesAgo = minutesAgoFromTimestamp(date);
 
   // Function to update the minutesAgo value
-  const updateMinutesAgo = () => {
+  const updateMinutesAgo = (date) => {
     minutesAgo = minutesAgoFromTimestamp(date);
   };
+
+  $: updateMinutesAgo(date);
 
   let interval;
   onMount(() => {
@@ -28,15 +30,15 @@
 </script>
 
 <button
-  class="cursor-pointer p-4 flex justify-between gap-3 border-white/5 border-b"
+  class="cursor-pointer p-4 flex justify-between gap-3 border-white/5 border-b hover:bg-neutral-800 transition-all"
   on:click={() => {
     goto(`/chat/${user.id}`);
   }}
 >
-  <div class="flex gap-3">
-    <Avatar />
+  <div class="flex gap-3 items-center">
+    <Avatar lg={true} />
     <div class="flex flex-col text-left whitespace-pre-wrap">
-      <p>{user.username}</p>
+      <p class="">{user.username}</p>
       <p
         class="text-xs text-white/60 max-w-[14rem]"
         style="overflow-wrap: break-word;"

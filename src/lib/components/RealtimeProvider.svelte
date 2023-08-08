@@ -58,7 +58,7 @@
   ): ChatPartner[] {
     let found = false;
 
-    if (!oldPartners) {
+    if (!oldPartners || oldPartners.length === 0) {
       return [{ user: msg.from, content: msg.content, latest: msg.created }];
     } else {
       for (let i = 0; i < oldPartners.length; i++) {
@@ -96,7 +96,7 @@
   ): ChatPartner[] {
     let found = false;
 
-    if (!oldPartners) {
+    if (!oldPartners || oldPartners.length === 0) {
       return [{ user: msg.to, content: msg.content, latest: msg.created }];
     } else {
       for (let i = 0; i < oldPartners.length; i++) {
