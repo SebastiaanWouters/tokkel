@@ -58,6 +58,7 @@
       );
       if (sentMsg) {
         message = "";
+        imgBase64 = undefined;
         return { ...sentMsg, content: msg };
       }
     }
