@@ -35,9 +35,9 @@
 
 <div class="fill grid grid-rows-[auto_1fr]">
   <div
-    class="w-full h-16 p-3 border-white/5 border-b flex justify-between items-center"
+    class="w-full h-16 p-3 border-border border-b flex justify-between items-center"
   >
-    <h1 class="font-semibold text-gray-300">Chats</h1>
+    <h1 class="font-semibold text-font">Chats</h1>
     <button
       on:click|stopPropagation={() => {
         open = true;

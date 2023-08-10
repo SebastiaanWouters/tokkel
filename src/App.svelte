@@ -23,7 +23,7 @@
   let platform = Capacitor.getPlatform();
 
   onMount(() => {
-    console.log("current user: " + $currentUser.id);
+    console.log("current user: " + $currentUser?.id);
     if (
       ($path.endsWith("/login") ||
         $path.endsWith("/register") ||
@@ -46,7 +46,7 @@
 </script>
 
 <main
-  class="bg-gray-50 dark:bg-neutral-900 mx-auto flex justify-center items-center min-h-screen h-screen"
+  class="bg-surface mx-auto flex justify-center items-center min-h-screen h-screen"
 >
   <QueryClientProvider client={queryClient}>
     <OnMount>

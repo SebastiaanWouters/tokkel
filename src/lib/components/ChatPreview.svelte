@@ -34,7 +34,7 @@
 </script>
 
 <button
-  class="cursor-pointer p-4 flex justify-between gap-3 border-white/5 border-b hover:bg-neutral-800 transition-all"
+  class="cursor-pointer p-4 flex justify-between gap-3 border-white/5 border-b hover:bg-surface-hover transition-all"
   on:click={() => {
     goto(`/chat/${user.id}`);
   }}
@@ -44,7 +44,7 @@
     <div class="flex flex-col text-left whitespace-pre-wrap">
       <p class="">{user.username}</p>
       <p
-        class="text-xs text-white/60 max-w-[14rem]"
+        class="text-xs dark:text-white/60 text-slate-600 max-w-[14rem]"
         style="overflow-wrap: break-word;"
       >
         {truncateContent(parsePreview(content), 24)}
@@ -52,6 +52,6 @@
     </div>
   </div>
   <div class="flex flex-col">
-    <p class="text-xs text-white/60">{minutesAgo}</p>
+    <p class="text-xs dark:text-white/60 text-slate-500">{minutesAgo}</p>
   </div>
 </button>

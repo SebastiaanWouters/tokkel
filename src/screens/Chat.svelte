@@ -52,6 +52,16 @@
     );
   });
 
+  const scrollToBottom = async (node) => {
+    node.scroll({ top: node.scrollHeight, behavior: "smooth" });
+  };
+
+  $: if (currentMessages && scrollContainer) {
+    scrollToBottom(scrollContainer);
+  }
+
+  let scrollContainer;
+
   async function sendMessage(
     msg: string,
     image?: string,
@@ -185,7 +195,7 @@
     {/if}
   </TopBar>
   <div
-    class="absolute left-0 top-0 w-full h-full bg-neutral-900/90 z-[1000] grid place-content-center"
+    class="absolute left-0 top-0 w-full h-full bg-surface-90 z-[1000] grid place-content-center"
     class:hidden={!modalOpen}
   >
     <img
@@ -199,6 +209,7 @@
     />
   </div>
   <div
+    bind:this={scrollContainer}
     class="px-4 flex-col-reverse overflow-auto h-full flex gap-5 no-scrollbar py-20"
   >
     {#if $messages.isLoading}
@@ -240,7 +251,7 @@
     </div>
   {/if}
   <div
-    class="transition-all fixed flex gap-4 justify-between p-4 h-fit bg-neutral-900/60 backdrop-blur-xl"
+    class="transition-all fixed flex gap-4 justify-between p-4 h-fit bg-surface/50 backdrop-blur-xl"
     class:bottom-[12rem]={gifOpen}
     class:bottom-0={!gifOpen}
     style=" width:inherit;
@@ -249,7 +260,7 @@
     <input
       on:keydown={(e) => handleKeyDown(e)}
       id="text-input"
-      class="bg-transparent backdrop-blur-lg w-full outline-none focus:ring-primary-600 focus:border-primary-600 rounded"
+      class="bg-transparent text-md backdrop-blur-lg w-full outline-none focus:ring-primary-600 focus:border-primary-600 rounded"
       type="text"
       bind:value={message}
     />
@@ -272,17 +283,17 @@
         <!--our custom file upload button-->
         <label class="relative cursor-pointer" for="file-btn">
           {#if imgBase64}
-            <Paperclip color={primaryColors[500]} />
+            <Paperclip color="var(--primary-500)" />
           {:else}
-            <Paperclip color="#fff" />
+            <Paperclip color="var(--text-color)" />
           {/if}
         </label>
       </div>
       <button
-        id="send-button bg-transparent"
+        id="send-button"
         on:click={() => {
           sendMessage(message, imgBase64, gifToSend);
-        }}><SendHorizonal /></button
+        }}><SendHorizonal color="var(--text-color)" /></button
       >
     </div>
   </div>

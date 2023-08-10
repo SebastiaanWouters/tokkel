@@ -39,7 +39,7 @@
   });
 </script>
 
-<section class="bg-gray-50 dark:bg-neutral-900 fill px-6">
+<section class="bg-surface fill px-6">
   <div class="flex flex-col items-center justify-center py-8 mx-auto fill">
     <div
       class="flex items-center mb-6 text-2xl font-semibold text-gray-900 dark:text-white"

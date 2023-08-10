@@ -5,7 +5,7 @@
   import { goto } from "elegua";
 </script>
 
-<div class="fill flex justify-between py-2 border-white/5 border-t">
+<div class="fill flex justify-between py-2 border-border border-t">
   <NavItem>
     <button
       class="cursor-pointer contents"
@@ -15,9 +15,11 @@
     >
       <Home
         class="transition-all"
-        color={$path === "/chat" ? "white" : "gray"}
+        color={$path === "/chat"
+          ? "var(--text-color)"
+          : "var(--muted-text-color)"}
       />
-      <p class="transition-all" class:text-gray-400={!($path === "/home")}>
+      <p class="transition-all" class:text-font-muted={!($path === "/chat")}>
         Home
       </p>
     </button>
@@ -32,9 +34,14 @@
     >
       <Settings
         class="transition-all"
-        color={$path === "/settings" ? "white" : "gray"}
+        color={$path === "/settings"
+          ? "var(--text-color)"
+          : "var(--muted-text-color)"}
       />
-      <p class="transition-all" class:text-gray-400={!($path === "/settings")}>
+      <p
+        class="transition-all"
+        class:text-font-muted={!($path === "/settings")}
+      >
         Settings
       </p>
     </button>

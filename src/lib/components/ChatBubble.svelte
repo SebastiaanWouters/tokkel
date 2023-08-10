@@ -43,7 +43,7 @@
   class:self-end={owner}
   class:items-end={owner}
 >
-  <p class="text-white/60 text-[0.92rem]" class:text-end={owner}>
+  <p class="text-font-muted text-[0.92rem]" class:text-end={owner}>
     {minutesAgo}
   </p>
   <div class="flex flex-col gap-2">
@@ -66,10 +66,10 @@
           class:rounded-bl-sm={!owner}
           class:rounded-br-xl={!owner}
           class:rounded-br-sm={owner}
-          class:bg-neutral-700={!owner}
+          class:bg-surface-hover={!owner}
           class:bg-primary-700={owner}
         >
-          <div class="content">{@html parsedMessage.content}</div>
+          <div class="content text-md">{@html parsedMessage.content}</div>
         </div>
       {/if}
     {/if}
