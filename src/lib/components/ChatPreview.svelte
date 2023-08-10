@@ -2,7 +2,11 @@
   import { goto } from "elegua";
   import Avatar from "./Avatar.svelte";
   import type { User } from "../pocketbase";
-  import { minutesAgoFromTimestamp, truncateContent } from "../utils";
+  import {
+    minutesAgoFromTimestamp,
+    truncateContent,
+    parsePreview,
+  } from "../utils";
   import { onDestroy, onMount } from "svelte";
 
   export let user: User;
@@ -43,7 +47,7 @@
         class="text-xs text-white/60 max-w-[14rem]"
         style="overflow-wrap: break-word;"
       >
-        {truncateContent(content, 24)}
+        {truncateContent(parsePreview(content), 24)}
       </p>
     </div>
   </div>

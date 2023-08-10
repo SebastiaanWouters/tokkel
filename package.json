@@ -51,6 +51,7 @@
     "nostr-tools": "^1.13.1",
     "pocketbase": "^0.15.3",
     "svelte-asyncable": "^2.1.1",
+    "youtube-video-js": "^4.0.1",
     "zod": "^3.21.4"
   }
 }

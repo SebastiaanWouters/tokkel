@@ -1,11 +1,18 @@
 <script lang="ts">
   import { onMount, onDestroy } from "svelte";
-  import { minutesAgoFromTimestamp } from "../utils";
+  import {
+    minutesAgoFromTimestamp,
+    parseMessage,
+    type ParsedMessage,
+    MessageType,
+  } from "../utils";
   import { currentUser, type Message } from "../pocketbase";
+  import "youtube-video-js";
 
   export let message: Message;
-  export let open: boolean;
+  export let modalOpen: boolean;
   export let src: string;
+  let parsedMessage: ParsedMessage = null;
 
   let owner = false;
   let minutesAgo = minutesAgoFromTimestamp(message.created);
@@ -21,6 +28,7 @@
   // Update the time every 60 seconds (adjust interval as needed)
   let interval;
   onMount(() => {
+    parsedMessage = parseMessage(message.content);
     interval = setInterval(updateMinutesAgo, 20000); // 60 seconds
   });
 
@@ -39,31 +47,31 @@
     {minutesAgo}
   </p>
   <div class="flex flex-col gap-2">
-    {#if message.image}
-      <div
-        class="cursor-pointer rounded-t-xl max-w-[16rem] overflow-wrap overflow-hidden"
-      >
-        <img
+    {#if parsedMessage}
+      {#if parsedMessage.type === MessageType.Image}
+        <button
           on:click|stopPropagation={() => {
-            src = message.image;
-            open = true;
+            src = parsedMessage.content;
+            modalOpen = true;
           }}
-          src={message.image}
-          alt="message content"
-        />
-      </div>
+          class="cursor-pointer rounded-t-xl max-w-[16rem] overflow-wrap overflow-hidden"
+        >
+          <img src={parsedMessage.content} alt="message content" />
+        </button>
+      {:else}
+        <div
+          class="rounded-t-xl max-w-[20rem] overflow-wrap overflow-hidden"
+          style="overflow-wrap: break-word;"
+          class:rounded-bl-xl={owner}
+          class:rounded-bl-sm={!owner}
+          class:rounded-br-xl={!owner}
+          class:rounded-br-sm={owner}
+          class:bg-neutral-700={!owner}
+          class:bg-primary-700={owner}
+        >
+          <div class="content">{@html parsedMessage.content}</div>
+        </div>
+      {/if}
     {/if}
-    <div
-      class="py-2 px-3 rounded-t-xl max-w-[16rem] overflow-wrap overflow-hidden"
-      style="overflow-wrap: break-word;"
-      class:rounded-bl-xl={owner}
-      class:rounded-bl-sm={!owner}
-      class:rounded-br-xl={!owner}
-      class:rounded-br-sm={owner}
-      class:bg-neutral-700={!owner}
-      class:bg-primary-700={owner}
-    >
-      <p>{message.content}</p>
-    </div>
   </div>
 </div>

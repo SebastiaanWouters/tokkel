@@ -24,9 +24,7 @@ interface Message {
   to: User; 
   from: User;
   content: string;
-  image?: string;
   created: string;
-
 }
 
 interface RawMessage {
@@ -73,19 +71,12 @@ async function decryptMessages(messages: RawMessage[]): Promise<Message[]> {
   const decrypt = [];
   for (const msg of messages) {
     let decMsg = msg.content?.message ?? 'undefined'
-    let decImg = msg.content?.image ?? undefined
     if (msg.expand.from.id === pb.authStore.model.id) {
       try {
         decMsg = await decryptMessage(msg.content.message, sk, msg.expand.to.pubkey)
         
       } catch {
         decMsg="Failed Decrypting"
-      }
-      try {
-          decImg = await decryptMessage(msg.content.image, sk, msg.expand.to.pubkey)
-          console.log(decImg)
-      } catch {
-
       }
     } else {
       try {
@@ -94,13 +85,10 @@ async function decryptMessages(messages: RawMessage[]): Promise<Message[]> {
       } catch {
         decMsg="Failed Decrypting"
       }
-      try {
-        decImg = await decryptMessage(msg.content.image, sk, msg.expand.from.pubkey)
-      } catch {}
       
     }
     console.log("new message decrypted: " + decMsg)
-    decrypt.push({ created: msg.created, from: msg.expand.from, to: msg.expand.to, content: decMsg, image: decImg })
+    decrypt.push({ created: msg.created, from: msg.expand.from, to: msg.expand.to, content: decMsg })
     
   }
   return decrypt;
@@ -110,17 +98,11 @@ async function decryptMessages(messages: RawMessage[]): Promise<Message[]> {
 async function decryptRealtime(message: Message): Promise<Message> {
   let sk = await getSecureKey(pb.authStore.model.id)
   let decMsg = message.content;
-  let decImg= message.image ?? undefined;
     if (message.from.id === pb.authStore.model.id) {
       try {
          decMsg = await decryptMessage(message.content, sk, message.to.pubkey)
       } catch {
         decMsg = "decrypting realtime failed"
-      }
-      try {
-        decImg= await decryptMessage(message.image, sk, message.to.pubkey)
-      } catch {
-
       }
     } else {
       try {
@@ -128,35 +110,26 @@ async function decryptRealtime(message: Message): Promise<Message> {
       } catch {
         decMsg = "decrypting realtime failed"
       }
-      try {
-        decImg = await decryptMessage(message.image, sk, message.from.pubkey)
-      } catch {
-
-      }
     }
 
-      return { ...message, content: decMsg, image: decImg };
+      return { ...message, content: decMsg };
   }
 
-async function postMessage(msg: string, from: User, to: User, image: string = undefined): Promise<Message> {
+async function postMessage(msg: string, from: User, to: User): Promise<Message> {
   let ciphertext = msg;
-  let encryptedImg = image;
   let privKey = await getSecureKey(pb.authStore.model.id)
   if (privKey) {
     ciphertext = await nip04.encrypt(privKey, to.pubkey, msg);
-    if (encryptedImg) {
-      encryptedImg = await nip04.encrypt(privKey, to.pubkey, image);
-    }
   }
   // create data to post to pocketbase as message
   const data = {
     from: from.id,
     to: to.id,
-    content: JSON.stringify({ message: ciphertext, image: encryptedImg }),
+    content: JSON.stringify({ message: ciphertext }),
   };
   try {
     const msg = await pb.collection('messages').create(data) as MessageRecord;
-    return { from, to, content: msg.content.message, image: msg.content.image, created: msg.created};
+    return { from, to, content: msg.content.message, created: msg.created};
   } catch {
     return null
   }
@@ -235,7 +208,7 @@ async function fetchChatPartners() : Promise<{}> {
 async function expandMessage(m: MessageRecord): Promise<Message> {
   const from = await pb.collection('users').getFirstListItem(`id="${m.from}"`) as User
   const to = await pb.collection('users').getFirstListItem(`id="${m.to}"`) as User
-  return { ...m, to, from, content: m.content.message, image: m.content.image }
+  return { ...m, to, from, content: m.content.message }
 }
 
 let url = 'https://damp-sky-8598.fly.dev'
@@ -247,7 +220,6 @@ const currentUser = writable<User>(null)
 
 
 pb.authStore.onChange(async (auth) => {
-    console.log("Auth Changed");
     currentUser.set(pb.authStore.model as User);
 }, true)
 

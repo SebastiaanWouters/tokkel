@@ -6,6 +6,29 @@ import { string } from 'zod';
 
 const publicRoutes = ["/login", "/register"]
 
+enum MessageType {
+  Image = 'image',
+  Other = 'other',
+}
+
+interface ParsedMessage {
+  content: string;
+  type: MessageType;
+}
+
+const primaryColors = {
+  50: '#F8E4F6',
+  100: '#F2CCF0',
+  200: '#E29CE5',
+  300: '#CB6CD8',
+  400: '#AE3BCB',
+  500: '#7E2A9F',
+  600: '#602383',
+  700: '#451B66',
+  800: '#2D144A',
+  900: '#190C2E',
+};
+
 type Response = {
     value: string,
     error: boolean
@@ -88,7 +111,6 @@ function filterUniqueByAttribute<T>(list: T[], attribute: keyof T): T[] {
 }
 
 function minutesAgoFromTimestamp(timestampString: string): string {
-  console.log(timestampString)
   const timestamp = Date.parse(timestampString);
   if (isNaN(timestamp)) {
     throw new Error("Invalid timestamp format");
@@ -98,7 +120,45 @@ function minutesAgoFromTimestamp(timestampString: string): string {
 
 }
 
+function parseMessage(inputString: string): ParsedMessage {
+  if (inputString.startsWith('https') && inputString.endsWith('gif')) {
+    const imgElement = document.createElement('img');
+    imgElement.src = inputString;
+    return { content: imgElement.outerHTML, type: MessageType.Other }
+  } else if (inputString.includes('youtube.com') || inputString.includes('youtu.be')) {
+    const youtubeVideoElement = document.createElement('youtube-video');
+    youtubeVideoElement.setAttribute('controls', 'true');
+    youtubeVideoElement.setAttribute('allowfullscreen', 'true');
+    youtubeVideoElement.setAttribute('src', inputString);
+    
+    youtubeVideoElement.style.width = '100%';
+    youtubeVideoElement.style.height = '100%';
+    youtubeVideoElement.style.objectFit = 'cover';
+
+    return { content: youtubeVideoElement.outerHTML, type: MessageType.Other };
+  } else if (inputString.startsWith('data:image')) { // Check if input is a base64 image
+    return { content: inputString, type: MessageType.Image };
+  } else {
+    const pElement = document.createElement('p');
+    pElement.textContent = inputString;
+    pElement.className = 'py-2 px-3';
+    return { content: pElement.outerHTML, type: MessageType.Other };
+  }
+}
+
+function parsePreview(inputString: string): string {
+  if (inputString.includes('youtube.com') || inputString.includes('youtu.be')) {
+    return "Youtube Video";
+  } else if (inputString.startsWith('data:image')) {
+    return "Image Content";
+  } else if (inputString.startsWith('https') && inputString.endsWith('gif')) {
+    return "Gif Media";
+  } else {
+    return inputString;
+  }
+}
 
 
-export { getSecureKey, publicRoutes, truncateContent, setSecureKey, mapDataToListOfMessages, convertStringMapToList, minutesAgoFromTimestamp, privKeyFromEntropy, fromHexString, toHexString, filterUniqueByAttribute };
+
+export { getSecureKey, publicRoutes, primaryColors, parsePreview, MessageType, type ParsedMessage, parseMessage, truncateContent, setSecureKey, mapDataToListOfMessages, convertStringMapToList, minutesAgoFromTimestamp, privKeyFromEntropy, fromHexString, toHexString, filterUniqueByAttribute };
 export type { Response };
