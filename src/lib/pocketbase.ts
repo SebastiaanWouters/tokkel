@@ -48,6 +48,7 @@ interface RawMessage {
         const response = await pb.collection("users").authWithPassword(username, password);
         setSecureKey(pb.authStore.model.id, sk)
         await pb.collection('users').update(response.record.id, { pubkey: pk });
+        //check if remember was set => store the key in sessionstorage vs 
       }
 
   async function logoutUser() {

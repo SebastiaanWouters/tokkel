@@ -160,7 +160,7 @@
 
     new Compressor(file, {
       quality: 1,
-      maxWidth: 400,
+      maxWidth: 600,
       // The compression process is asynchronous,
       // which means you have to access the `result` in the `success` hook function.
       success(result) {
@@ -178,7 +178,7 @@
   }
 </script>
 
-<div class="max-w-md w-full h-screen max-h-screen flex flex-col">
+<div class="max-w-md w-full h-screen max-h-screen flex flex-col transition-all">
   <TopBar>
     <button on:click={() => goto("/chat")}
       ><ChevronLeftCircle strokeWidth={1.7} /></button
@@ -210,7 +210,7 @@
   </div>
   <div
     bind:this={scrollContainer}
-    class="px-4 flex-col-reverse overflow-auto h-full flex gap-5 no-scrollbar py-20"
+    class="px-4 flex-col-reverse overflow-auto h-screen flex gap-5 no-scrollbar py-4 transition-all"
   >
     {#if $messages.isLoading}
       <span>Loading...</span>
@@ -222,45 +222,14 @@
       {/each}
     {/if}
   </div>
-  {#if gifOpen}
-    <div
-      transition:fade={{ duration: 100 }}
-      class="h-48 max-h-48 min-h-[12rem] w-full flex items-center overflow-x-auto gap-2"
-    >
-      {#each gifs as gif, index}
-        <button
-          class="relative h-full cursor-pointer overflow-hidden rounded-xl flex flex-shrink-0 items-center"
-          on:click={() => {
-            selectedgifIndex = index;
-          }}
-        >
-          {#if index === selectedgifIndex}
-            <div class="absolute right-3 top-3">
-              <CheckCircle color="#eee" />
-            </div>
-          {/if}
-          <img
-            alt="gif"
-            class="h-full rounded-xl w-fit"
-            class:border-4={index === selectedgifIndex}
-            class:border-primary-700={index === selectedgifIndex}
-            src={gif.media_formats.mediumgif.url}
-          />
-        </button>
-      {/each}
-    </div>
-  {/if}
+
   <div
-    class="transition-all fixed flex gap-4 justify-between p-4 h-fit bg-surface/50 backdrop-blur-xl"
-    class:bottom-[12rem]={gifOpen}
-    class:bottom-0={!gifOpen}
-    style=" width:inherit;
-    max-width:inherit;"
+    class="transition-all flex flex-1 gap-4 border-border border-t justify-between px-4 py-6 h-fit bg-surface"
   >
     <input
       on:keydown={(e) => handleKeyDown(e)}
       id="text-input"
-      class="bg-transparent text-md backdrop-blur-lg w-full outline-none focus:ring-primary-600 focus:border-primary-600 rounded"
+      class="bg-surface-hover text-md w-full outline-none focus:ring-primary-600 focus:border-primary-600 rounded"
       type="text"
       bind:value={message}
     />
@@ -297,6 +266,34 @@
       >
     </div>
   </div>
+  {#if gifOpen}
+    <div
+      transition:fade={{ duration: 100 }}
+      class="h-48 max-h-48 min-h-[12rem] w-full flex items-center overflow-x-auto gap-2"
+    >
+      {#each gifs as gif, index}
+        <button
+          class="relative h-full cursor-pointer overflow-hidden rounded-xl flex flex-shrink-0 items-center"
+          on:click={() => {
+            selectedgifIndex = index;
+          }}
+        >
+          {#if index === selectedgifIndex}
+            <div class="absolute right-3 top-3">
+              <CheckCircle color="#eee" />
+            </div>
+          {/if}
+          <img
+            alt="gif"
+            class="h-full rounded-xl w-fit"
+            class:border-4={index === selectedgifIndex}
+            class:border-primary-700={index === selectedgifIndex}
+            src={gif.media_formats.mediumgif.url}
+          />
+        </button>
+      {/each}
+    </div>
+  {/if}
 </div>
 
 <style>

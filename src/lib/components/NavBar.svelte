@@ -5,7 +5,7 @@
   import { goto } from "elegua";
 </script>
 
-<div class="fill flex justify-between py-2 border-border border-t">
+<div class="fill flex justify-between pb-3 pt-2 border-border border-t">
   <NavItem>
     <button
       class="cursor-pointer contents"
