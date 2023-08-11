@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Capacitor } from "@capacitor/core";
-  import { pb, currentUser } from "./lib/pocketbase";
+  import { pb, currentUser, rememberUser } from "./lib/pocketbase";
   import { path, resolve, params, match, goto, searchParams } from "elegua";
   import Login from "./screens/Login.svelte";
   import Register from "./screens/Register.svelte";
@@ -13,7 +13,7 @@
   import NavBar from "./lib/components/NavBar.svelte";
   import Chats from "./screens/Chats.svelte";
   import Settings from "./screens/Settings.svelte";
-  import { publicRoutes } from "./lib/utils";
+  import { publicRoutes, setSecureKey } from "./lib/utils";
   import { QueryClientProvider, QueryClient } from "@sveltestack/svelte-query";
   import RealtimeProvider from "./lib/components/RealtimeProvider.svelte";
   import ChatProvider from "./lib/components/ChatProvider.svelte";
@@ -23,6 +23,12 @@
   let platform = Capacitor.getPlatform();
 
   onMount(() => {
+    window.addEventListener("beforeunload", async function (e) {
+      if (!$rememberUser) {
+        await setSecureKey($currentUser.id, null);
+        pb.authStore.clear();
+      }
+    });
     console.log("current user: " + $currentUser?.id);
     if (
       ($path.endsWith("/login") ||

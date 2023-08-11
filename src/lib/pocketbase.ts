@@ -218,10 +218,12 @@ const pb = new PocketBase(url);
 //const currentUser = writable<User>(null)
 const currentUser = writable<User>(null)
 
+const rememberUser = writable<boolean>(false);
+
 
 pb.authStore.onChange(async (auth) => {
     currentUser.set(pb.authStore.model as User);
 }, true)
 
-export { pb, currentUser, decryptRealtime, getUserByName, expandMessage, getUserById, fetchMessages, fetchAllMessages, fetchChatPartners, postMessage, createUser, loginUser, logoutUser }
+export { pb, currentUser, rememberUser, decryptRealtime, getUserByName, expandMessage, getUserById, fetchMessages, fetchAllMessages, fetchChatPartners, postMessage, createUser, loginUser, logoutUser }
 export type { User, Message, ChatPartner, MessageRecord }

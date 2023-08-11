@@ -2,7 +2,6 @@ import { SecureStoragePlugin } from 'capacitor-secure-storage-plugin';
 import * as secp from "@noble/secp256k1";
 import hkdf from '@panva/hkdf'
 import { intlFormatDistance } from 'date-fns';
-import { string } from 'zod';
 
 const publicRoutes = ["/login", "/register"]
 

@@ -8,6 +8,7 @@
   import * as secp from "@noble/secp256k1";
   import Spinner from "../lib/components/spinner.svelte";
   import { goto } from "elegua";
+  import { rememberUser } from "../lib/pocketbase";
 
   const schema = zod.object({
     username: zod.string().min(5).max(16),
@@ -20,6 +21,11 @@
 
   let loading = false;
   let error = null;
+
+  async function updateRememberValue(e) {
+    console.log(e.target.checked);
+    $rememberUser = e.target.checked;
+  }
 
   const { form, errors, warnings, data } = createForm({
     extend: [
@@ -105,6 +111,7 @@
             <div class="flex items-start">
               <div class="flex items-center h-5">
                 <input
+                  on:change={(e) => updateRememberValue(e)}
                   id="remember"
                   aria-describedby="remember"
                   type="checkbox"
