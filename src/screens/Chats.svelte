@@ -45,7 +45,7 @@
       class="cursor-pointer"><PenSquare size={18} /></button
     >
   </div>
-  <div class="flex flex-col gap-2">
+  <div class="flex flex-col gap-2 overflow-y-scroll no-scrollbar">
     {#if $partners.status === "success"}
       {#each $partners.data as partner}
         <ChatPreview
@@ -66,3 +66,16 @@
     <NewChat bind:open />
   </div>
 </div>
+
+<style>
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Hide scrollbar for IE, Edge and Firefox */
+  .no-scrollbar {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+</style>

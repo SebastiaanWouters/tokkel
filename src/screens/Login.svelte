@@ -77,7 +77,7 @@
               required={true}
             />
             <p
-              class="h-0.5 flex justify-end mr-1 text-xs text-primary-500 m-0 p-0 mt-[0.18rem]"
+              class="h-0.5 flex justify-end mr-1 text-xs text-primary-500 m-0 p-0 mt-[0.18rem] pb-[16px]"
             >
               {$data.username && $warnings?.username
                 ? $warnings.username[0]
@@ -99,7 +99,7 @@
               required=""
             />
             <p
-              class="h-0.5 flex justify-end mr-1 text-xs text-primary-500 m-0 p-0 mt-[0.18rem] pb-[0.80rem]"
+              class="h-0.5 flex justify-end mr-1 text-xs text-primary-500 m-0 p-0 mt-[0.18rem] pb-[16px]"
             >
               {$data.password && $warnings?.password
                 ? $warnings.password[0]

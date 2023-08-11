@@ -76,7 +76,7 @@
               required={true}
             />
             <p
-              class="h-0.5 flex justify-end mr-1 text-xs text-primary-300/70 m-0 p-0 mt-[0.18rem]"
+              class="h-0.5 flex justify-end mr-1 text-xs text-primary-500 m-0 p-0 mt-[0.18rem] pb-[8px]"
             >
               {$data.username && $warnings?.username
                 ? $warnings.username[0]
@@ -98,7 +98,7 @@
               required={true}
             />
             <p
-              class="h-0.5 flex justify-end mr-1 text-xs text-primary-300/70 m-0 p-0 mt-[0.18rem]"
+              class="h-0.5 flex justify-end mr-1 text-xs text-primary-500 m-0 p-0 mt-[0.18rem] pb-[8px]"
             >
               {$data.password && $warnings?.password
                 ? $warnings.password[0]
@@ -120,7 +120,7 @@
               required={true}
             />
             <p
-              class="h-0.5 flex justify-end mr-1 text-xs text-primary-300/70 m-0 p-0 mt-[0.18rem] pb-[0.65rem] mb-[0.65rem]"
+              class="h-0.5 flex justify-end mr-1 text-xs text-primary-500 m-0 p-0 mt-[0.18rem] pb-[20px]"
             >
               {$data.password && $warnings?.confirm ? $warnings.confirm[0] : ""}
             </p>

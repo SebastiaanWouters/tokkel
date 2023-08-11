@@ -53,7 +53,7 @@
   });
 
   const scrollToBottom = async (node) => {
-    node.scroll({ top: node.scrollHeight, behavior: "smooth" });
+    node.scrollTop = node.scrollHeight - 400;
   };
 
   $: if (currentMessages && scrollContainer) {
@@ -210,7 +210,7 @@
   </div>
   <div
     bind:this={scrollContainer}
-    class="px-4 flex-col-reverse overflow-auto h-screen flex gap-5 no-scrollbar py-4 transition-all"
+    class="px-4 flex-col-reverse overflow-y-scroll h-screen flex gap-5 no-scrollbar py-4 transition-all"
   >
     {#if $messages.isLoading}
       <span>Loading...</span>
