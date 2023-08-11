@@ -4,7 +4,7 @@
 
 <div class="fill grid grid-rows-[auto_1fr]">
   <div
-    class="h-16 w-full p-3 font-semibold text-font border-border border-b items-center flex"
+    class="h-16 w-full p-3 font-semibold text-font border-border border-b border-t items-center flex"
   >
     Settings
   </div>
