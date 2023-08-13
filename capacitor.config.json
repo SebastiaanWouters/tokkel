@@ -1,5 +1,5 @@
 {
-  "appId": "io.tokkel.app",
+  "appId": "io.framework7.tokkel",
   "appName": "Tokkel",
   "bundledWebRuntime": false,
   "npmClient": "npm",

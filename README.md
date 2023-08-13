@@ -13,17 +13,17 @@ Framework7 app created with following options:
   ],
   "name": "Tokkel",
   "framework": "svelte",
-  "template": "tabs",
+  "template": "single-view",
   "bundler": "vite",
   "cssPreProcessor": "scss",
   "theming": {
     "customColor": true,
-    "color": "#5e004b",
+    "color": "#310637",
     "darkMode": true,
     "iconFonts": true
   },
   "customBuild": false,
-  "pkg": "io.tokkel.app",
+  "pkg": "io.framework7.tokkel",
   "capacitor": {
     "platforms": [
       "ios",

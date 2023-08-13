@@ -1,5 +1,7 @@
 
 import path from 'path';
+ import autoPreprocess from 'svelte-preprocess';
+ import typescript from '@rollup/plugin-typescript';
 
 
 
@@ -10,9 +12,11 @@ export default async () => {
   const { svelte } = await import('@sveltejs/vite-plugin-svelte');
   return  {
     plugins: [
-      svelte(),
-
-    ],
+  svelte({
+     preprocess: autoPreprocess()
+  }),
+   typescript({ sourceMap: true })
+  ],
     root: SRC_DIR,
     base: '',
     publicDir: PUBLIC_DIR,

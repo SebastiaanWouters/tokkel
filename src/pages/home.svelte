@@ -1,70 +1,62 @@
-<Page name="home">
-  <!-- Top Navbar -->
-  <Navbar large sliding={false}>
-    <NavLeft>
-      <Link iconIos="f7:menu" iconMd="material:menu" panelOpen="left" />
-    </NavLeft>
-    <NavTitle sliding>Tokkel</NavTitle>
-    <NavRight>
-      <Link iconIos="f7:menu" iconMd="material:menu" panelOpen="right" />
-    </NavRight>
-    <NavTitleLarge>Tokkel</NavTitleLarge>
-  </Navbar>
-
-  <!-- Page content -->
-  <Block>
-    <p>This is an example of tabs-layout application. The main point of such tabbed layout is that each tab contains independent view with its own routing and navigation.</p>
-
-    <p>Each tab/view may have different layout, different navbar type (dynamic, fixed or static) or without navbar like this tab.</p>
-  </Block>
-
-  <BlockTitle>Navigation</BlockTitle>
-  <List strong inset dividersIos>
-    <ListItem link="/about/" title="About"/>
-    <ListItem link="/form/" title="Form"/>
-  </List>
-
-  <BlockTitle>Modals</BlockTitle>
-  <Block class="grid grid-cols-2 grid-gap">
-    <Button fill popupOpen="#my-popup">Popup</Button>
-    <Button fill loginScreenOpen="#my-login-screen">Login Screen</Button>
-  </Block>
-
-  <BlockTitle>Panels</BlockTitle>
-  <Block class="grid grid-cols-2 grid-gap">
-    <Button fill panelOpen="left">Left Panel</Button>
-    <Button fill panelOpen="right">Right Panel</Button>
-  </Block>
-
-  <List strong inset dividersIos>
-    <ListItem
-      title="Dynamic (Component) Route"
-      link="/dynamic-route/blog/45/post/125/?foo=bar#about"
-    />
-    <ListItem
-      title="Default Route (404)"
-      link="/load-something-that-doesnt-exist/"
-    />
-    <ListItem
-      title="Request Data & Load"
-      link="/request-and-load/user/123456/"
-    />
-  </List>
-</Page>
 <script>
   import {
     Page,
     Navbar,
-    NavLeft,
     NavTitle,
-    NavTitleLarge,
-    NavRight,
     Link,
-    Toolbar,
+    f7,
+    Sheet,
+    PageContent,
     Block,
+    NavTitleLarge,
     BlockTitle,
-    List,
-    ListItem,
-    Button
-  } from 'framework7-svelte';
+  } from "framework7-svelte";
+  import { Button } from "konsta/svelte";
+  import { authStore } from "../lib/pocketbase";
+  import { onMount } from "svelte";
+  import { app } from "framework7-svelte";
+  import NewChatSheet from "../components/NewChatSheet.svelte";
+  import { logoutUser } from "../lib/api";
+
+  export let f7router;
+  let ready = false;
+  let opened = false;
+
+  onMount(async () => {
+    if (!$authStore) {
+      await setTimeout(() => {}, 2);
+      f7router.navigate("/login");
+    } else {
+      ready = true;
+    }
+  });
+
+  $: if (!$authStore && ready) {
+    f7router.navigate("/login");
+    console.log("going to login");
+  }
 </script>
+
+<Page id="page" name="home">
+  {#if ready}
+    <!-- Top Navbar -->
+    <Navbar translucent slot="fixed" sliding={true}>
+      <NavTitle class="" sliding>Messages</NavTitle>
+    </Navbar>
+    <!-- Toolbar -->
+
+    <!-- Page content -->
+    <div class="p-8">
+      <Block>
+        <BlockTitle>Welcome {$authStore?.username ?? "N00B"}</BlockTitle>
+      </Block>
+      <Button
+        large
+        onClick={() => {
+          logoutUser();
+        }}>Logout</Button
+      >
+      <NewChatSheet bind:opened />
+    </div>
+  {/if}
+</Page>

@@ -1,1 +1,12 @@
 /* Your app custom styles here */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --f7-theme-color: #ff6b22;
+  --f7-theme-color-rgb: 255, 107, 34;
+  --f7-theme-color-shade: #f85200;
+  --f7-theme-color-tint: #ff864b;
+  
+}
