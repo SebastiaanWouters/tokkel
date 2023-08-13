@@ -1,51 +1,30 @@
 {
   "name": "tokkel",
   "private": true,
-  "version": "1.0.0",
-  "description": "Tokkel",
-  "repository": "",
-  "license": "UNLICENSED",
+  "version": "0.0.0",
+  "type": "module",
   "scripts": {
-    "start": "npm run dev",
-    "dev": "cross-env NODE_ENV=development vite",
-    "build": "cross-env NODE_ENV=production vite build && npx workbox generateSW workbox-config.js",
-    "build-capacitor-ios": "cross-env NODE_ENV=production vite build && npx cap copy ios",
-    "build-capacitor-android": "cross-env NODE_ENV=production vite build && npx cap copy android",
-    "postinstall": "cpy --flat ./node_modules/framework7-icons/fonts/*.* ./src/fonts/ && cpy --flat ./node_modules/material-icons/iconfont/*.* ./src/fonts/"
-  },
-  "browserslist": [
-    "IOS >= 15",
-    "Safari >= 15",
-    "last 5 Chrome versions",
-    "last 5 Firefox versions"
-  ],
-  "dependencies": {
-    "@capacitor/android": "^5.2.3",
-    "@capacitor/app": "^5.0.6",
-    "@capacitor/browser": "^5.0.6",
-    "@capacitor/core": "^5.2.3",
-    "@capacitor/ios": "^5.2.3",
-    "@capacitor/keyboard": "^5.0.6",
-    "@capacitor/splash-screen": "^5.0.6",
-    "@capacitor/status-bar": "^5.0.6",
-    "dom7": "^4.0.6",
-    "framework7": "^8.2.0",
-    "framework7-icons": "^5.0.5",
-    "framework7-svelte": "^8.2.0",
-    "material-icons": "^1.13.9",
-    "skeleton-elements": "^4.0.1",
-    "svelte": "^4.2.0",
-    "swiper": "^10.1.0"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-check --tsconfig ./tsconfig.json"
   },
   "devDependencies": {
-    "@capacitor/cli": "^5.2.3",
-    "@sveltejs/vite-plugin-svelte": "^2.4.5",
-    "cordova-res": "^0.15.4",
-    "cpy-cli": "^5.0.0",
-    "cross-env": "^7.0.3",
-    "postcss-preset-env": "^9.1.1",
-    "sass": "^1.65.1",
-    "vite": "^4.4.9",
-    "workbox-cli": "^7.0.0"
+    "@sveltejs/vite-plugin-svelte": "^2.4.2",
+    "@tailwindcss/typography": "^0.5.9",
+    "@tsconfig/svelte": "^5.0.0",
+    "autoprefixer": "^10.4.14",
+    "postcss": "^8.4.27",
+    "svelte": "^4.0.5",
+    "svelte-check": "^3.4.6",
+    "tailwindcss": "^3.3.3",
+    "tslib": "^2.6.0",
+    "typescript": "^5.0.2",
+    "vite": "^4.4.5"
+  },
+  "dependencies": {
+    "elegua": "^2.1.2",
+    "konsta": "^2.0.0",
+    "lucide-svelte": "^0.265.0"
   }
 }
