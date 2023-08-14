@@ -6,7 +6,7 @@
   "repository": "",
   "license": "UNLICENSED",
   "scripts": {
-    "start": "npm run dev",
+    "start": "npm run dev --host",
     "dev": "cross-env NODE_ENV=development vite",
     "build": "cross-env NODE_ENV=production vite build && npx workbox generateSW workbox-config.js",
     "build-capacitor-ios": "cross-env NODE_ENV=production vite build && npx cap copy ios",
