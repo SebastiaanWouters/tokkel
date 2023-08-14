@@ -3,7 +3,7 @@
   "short_name": "Tokkel",
   "description": "Tokkel",
   "lang": "en-US",
-  "start_url": "/",
+  "start_url": "https://tokkel.sebdev.be",
   "display": "standalone",
   "background_color": "#310637",
   "theme_color": "#310637",
