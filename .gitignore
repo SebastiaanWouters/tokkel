@@ -50,5 +50,6 @@ resources/windows/splash
 
 # Production build
 www/
-build/
+build
+build/*
 .vercel
