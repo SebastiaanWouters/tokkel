@@ -19,17 +19,11 @@
 
   export let f7router;
   export let newHere = false;
-  let deferredPrompt = null;
   let error: string | null = null;
   let loading = false;
   let remember = false;
   let username = { value: "", changed: false, error: "" };
   let password = { value: "", changed: false, error: "" };
-
-  //install prompt
-  window.addEventListener("beforeinstallprompt", (e) => {
-    deferredPrompt = e;
-  });
 
   onMount(() => {
     const cookie = Cookies.get("visited");
@@ -41,10 +35,17 @@
       Cookies.set("visited");
     }
 
+    let deferredPrompt = null;
+    //install prompt
+    window.addEventListener("beforeinstallprompt", (e) => {
+      deferredPrompt = e;
+    });
+
     const installApp = document.getElementById("installApp");
     installApp.addEventListener("click", async () => {
       if (deferredPrompt !== null) {
         deferredPrompt.prompt();
+        window.alert("installable");
         const { outcome } = await deferredPrompt.userChoice;
         if (outcome === "accepted") {
           deferredPrompt = null;
