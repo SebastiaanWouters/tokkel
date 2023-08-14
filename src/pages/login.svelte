@@ -9,7 +9,7 @@
     Checkbox,
     ListItem,
   } from "konsta/svelte";
-  import { Link, Page } from "framework7-svelte";
+  import { Link, Page, f7 } from "framework7-svelte";
   import { PersonStanding, LockIcon, LogInIcon, Loader2 } from "lucide-svelte";
   import { loginUser } from "../lib/api";
   import { z } from "zod";
@@ -27,9 +27,12 @@
 
   onMount(() => {
     const cookie = Cookies.get("visited");
-    if (cookie) {
+    if (!cookie) {
       const device = getDevice();
       if ((device.android || device.ios) && !device.webView) {
+        f7.dialog.alert(
+          "You can add tokkel to your homescreen for the best experience"
+        );
       }
       //first time visitor
       Cookies.set("visited");
@@ -38,21 +41,9 @@
     let deferredPrompt = null;
     //install prompt
     window.addEventListener("beforeinstallprompt", (e) => {
-      deferredPrompt = e;
-    });
-
-    const installApp = document.getElementById("installApp");
-    installApp.addEventListener("click", async () => {
-      if (deferredPrompt !== null) {
-        deferredPrompt.prompt();
-        window.alert("installable");
-        const { outcome } = await deferredPrompt.userChoice;
-        if (outcome === "accepted") {
-          deferredPrompt = null;
-        }
-      } else {
-        console.log("not installable");
-      }
+      f7.dialog.alert(
+        "You can add tokkel to your homescreen for the best experience"
+      );
     });
   });
 
@@ -181,7 +172,6 @@
           {/if}
         </div></Button
       >
-      <Button id="installApp">Install</Button>
       <p class="text-zinc-400">
         No account yet? <Link class="text-primary" href="/register"
           >Register</Link
