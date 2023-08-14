@@ -8,14 +8,14 @@ import { pb } from "./pocketbase";
 
 
 
-  async function createUser(username: string, password: string, passwordConfirm: string) {
+  async function createUser(username: string, password: string, passwordConfirm: string): Promise<Result<User>> {
     try {
        const user = await pb.collection("users").create({
         username, 
         password,
         passwordConfirm,
         name: username,
-      });
+      }) as User;
       return { value: user, error: null }
     } catch {
       return { value: null, error: "Something went wrong"};
@@ -25,7 +25,6 @@ import { pb } from "./pocketbase";
   }
 
   async function loginUser(username: string, password: string): Promise<Result<User>> {
-    console.log(username, password)
     try {
         const sk = await privKeyFromEntropy(password, username);
         const pk = getPublicKey(sk);

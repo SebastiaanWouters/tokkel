@@ -10,14 +10,48 @@
     ListItem,
   } from "konsta/svelte";
   import { Link, Page } from "framework7-svelte";
-  import { PersonStanding, LockIcon, LogInIcon } from "lucide-svelte";
+  import { PersonStanding, LockIcon, LogInIcon, Loader2 } from "lucide-svelte";
   import { loginUser } from "../lib/api";
   import { z } from "zod";
+  import Cookies from "js-cookie";
+  import { getDevice } from "framework7";
+  import { onMount } from "svelte";
 
   export let f7router;
+  export let newHere = false;
+  let deferredPrompt;
+  let error: string | null = null;
+  let loading = false;
   let remember = false;
   let username = { value: "", changed: false, error: "" };
   let password = { value: "", changed: false, error: "" };
+
+  onMount(() => {
+    const cookie = Cookies.get("visited");
+    if (cookie) {
+      const device = getDevice();
+      if ((device.android || device.ios) && !device.webView) {
+      }
+      //first time visitor
+      Cookies.set("visited");
+    }
+
+    //install prompt
+    window.addEventListener("beforeinstallprompt", (e) => {
+      deferredPrompt = e;
+    });
+
+    const installApp = document.getElementById("installApp");
+    installApp.addEventListener("click", async () => {
+      if (deferredPrompt !== null) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === "accepted") {
+          deferredPrompt = null;
+        }
+      }
+    });
+  });
 
   const onNameChange = (e) => {
     validateUserName();
@@ -29,50 +63,70 @@
   };
 
   const schema = z.object({
-    username: z.string().min(5).max(16),
-    password: z.string().min(8).max(32),
+    username: z.string().min(5).max(18),
+    password: z.string().min(8).max(38),
   });
 
-  const validateUserName = () => {
+  const validateUserName = (): boolean => {
     try {
       schema.shape.username.parse(username.value);
       username.error = "";
+      return true;
     } catch {
-      username.error = "fail";
+      username.error = "Please enter a valid/unique username";
+      return false;
     }
   };
 
-  const validatePassword = () => {
+  const validatePassword = (): boolean => {
     try {
       schema.shape.password.parse(password.value);
       password.error = "";
+      return true;
     } catch {
-      password.error = "fail";
+      password.error = "Please enter a valid password";
+      return false;
     }
   };
 
   async function attemptLogin() {
-    const res = await loginUser(username.value, password.value);
-    if (res.error) {
+    loading = true;
+    if (validatePassword() && validateUserName()) {
+      const res = await loginUser(username.value, password.value);
+      if (res.error) {
+        error = "invalid credentials, please try again";
+        loading = false;
+        return;
+      }
+      f7router.navigate("/");
+      loading = false;
+    } else {
+      loading = false;
       return;
     }
-    f7router.navigate("/");
   }
 </script>
 
 <Page name="login">
   <div class="dark h-full flex flex-col justify-center items-center px-4">
     <h1
-      class="material:px-4 text-left font-semibold w-full max-w-2xl text-3xl leading-6"
+      class="material:px-4 text-left font-semibold w-full max-w-2xl text-3xl leading-10"
     >
-      Login
+      {#if newHere}
+        Account created, please log in
+      {:else}
+        Login
+      {/if}
     </h1>
-    <List class="w-full max-w-2xl" strongIos insetIos>
+    {#if error}
+      <p class="w-full max-w-2xl text-primary mt-1">{error}</p>
+    {/if}
+    <List class="w-full max-w-2xl mt-6" strongIos insetIos>
       <ListInput
         class="w-full"
         label="Username"
         type="text"
-        placeholder="Your desired username"
+        placeholder="Your username"
         info=""
         value={username.value}
         error={username.error}
@@ -116,9 +170,15 @@
           attemptLogin();
         }}
         ><div class="flex items-center">
-          {"Login "}<LogInIcon class="ml-1 h-5 w-7 mt-[0.1rem]" />
+          {"Login "}
+          {#if !loading}
+            <LogInIcon class="ml-1 h-5 w-7" />
+          {:else}
+            <Loader2 class="animate-spin ml-1 h-5 w-7" />
+          {/if}
         </div></Button
       >
+      <Button id="installApp">Install</Button>
       <p class="text-zinc-400">
         No account yet? <Link class="text-primary" href="/register"
           >Register</Link

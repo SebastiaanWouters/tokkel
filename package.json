@@ -38,6 +38,7 @@
     "framework7": "^8.2.0",
     "framework7-icons": "^5.0.5",
     "framework7-svelte": "^8.2.0",
+    "js-cookie": "^3.0.5",
     "konsta": "^2.0.0",
     "lucide-svelte": "^0.266.0",
     "material-icons": "^1.13.9",
