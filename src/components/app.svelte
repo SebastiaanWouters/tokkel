@@ -25,7 +25,7 @@
     BlockFooter,
   } from "framework7-svelte";
   import { KonstaProvider } from "konsta/svelte";
-
+  import { QueryClient, QueryClientProvider } from "@tanstack/svelte-query";
   import capacitorApp from "../js/capacitor-app";
   import routes from "../js/routes";
 
@@ -70,11 +70,15 @@
       // Call F7 APIs here
     });
   });
+
+  const queryClient = new QueryClient();
 </script>
 
 <KonstaProvider dark theme="parent">
-  <App {...f7params}>
-    <!-- Your main view, should have "view-main" class -->
-    <View main class="safe-areas" url="/" />
-  </App>
+  <QueryClientProvider client={queryClient}>
+    <App {...f7params}>
+      <!-- Your main view, should have "view-main" class -->
+      <View main class="safe-areas" url="/" />
+    </App>
+  </QueryClientProvider>
 </KonstaProvider>

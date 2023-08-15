@@ -2,8 +2,8 @@ import { writable } from "svelte/store";
 import { getPublicKey, nip04 } from "nostr-tools";
 
 import PocketBase, { type ClientResponseError } from 'pocketbase';
-import { getSecureKey, privKeyFromEntropy, setSecureKey } from "./utils";
-import type { Message, MessageRecord, RawMessage, Result, User } from "./types";
+import { convertStringMapToList, getSecureKey, privKeyFromEntropy, setSecureKey } from "./utils";
+import type { ChatPartner, Message, MessageRecord, RawMessage, Result, User } from "./types";
 import { pb } from "./pocketbase";
 
 
@@ -42,6 +42,15 @@ import { pb } from "./pocketbase";
   async function logoutUser() {
     await setSecureKey(pb.authStore.model?.id ?? null, null)
     pb.authStore.clear();
+  }
+
+  async function fetchAllUsers(): Promise<User[] | null> {
+    try {
+      const users = await pb.collection('users').getFullList() as User[];
+      return users
+    } catch {
+      return null
+    }
   }
 
 
@@ -167,13 +176,14 @@ async function fetchAllMessages() : Promise<Message[]> {
   
 }
 
-async function fetchChatPartners() : Promise<{}> {
+async function fetchChatPartners() : Promise<ChatPartner[] | null> {
+  try {
   const messages = await fetchAllMessages();
    for (const msg of messages) {
       console.log("new message found while getting partners")
       break;
     }
-  const partners = new Map()
+  const partners = new Map<string, ChatPartner>()
     for (const msg of messages) {
       if (msg.from.id !== pb.authStore.model?.id) {
         partners.set(msg.from.id, { user: msg.from, latest: msg.created, content: msg.content })
@@ -185,8 +195,17 @@ async function fetchChatPartners() : Promise<{}> {
          break;
       }
     }
-    return partners;
+    const partnersArray = convertStringMapToList(
+      partners,
+      "latest"
+    ) as ChatPartner[];
+    return partnersArray;
+  } catch {
+      return null
+    }
 }
+
+
 
 
 async function expandMessage(m: MessageRecord): Promise<Message> {
@@ -202,4 +221,4 @@ const rememberUser = writable<boolean>(false);
 
 
 
-export {rememberUser, decryptRealtime, getUserByName, expandMessage, getUserById, fetchMessages, fetchAllMessages, fetchChatPartners, postMessage, createUser, loginUser, logoutUser }
+export {rememberUser, fetchAllUsers, decryptRealtime, getUserByName, expandMessage, getUserById, fetchMessages, fetchAllMessages, fetchChatPartners, postMessage, createUser, loginUser, logoutUser }

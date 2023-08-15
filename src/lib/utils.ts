@@ -2,7 +2,7 @@ import { SecureStoragePlugin } from 'capacitor-secure-storage-plugin';
 import * as secp from "@noble/secp256k1";
 import hkdf from '@panva/hkdf'
 import { intlFormatDistance } from 'date-fns';
-import type { Message } from './types';
+import type { ChatPartner, Message } from './types';
 import type { ParsedMessage } from './types';
 import { MessageType } from './types';
 
@@ -50,7 +50,7 @@ function convertStringMapToList(stringMap, sortByProperty) {
   // Step 1: Parse the string representation of the map into an object  
 
   // Step 2: Convert the object's values into an array of objects
-  const arrayOfObjects = Array.from(stringMap.values()) as Message[]
+  const arrayOfObjects = Array.from(stringMap.values()) as ChatPartner[]
 
   // Step 3: Sort the array of objects based on the desired property
   arrayOfObjects.sort((b, a) => Date.parse(a[sortByProperty]) - Date.parse(b[sortByProperty]));

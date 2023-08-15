@@ -30,9 +30,12 @@
     if (!cookie) {
       const device = getDevice();
       if ((device.android || device.ios) && !device.webView) {
-        f7.dialog.alert(
-          "You can add tokkel to your homescreen for the best experience"
-        );
+        setTimeout(() => {
+          f7.dialog.alert(
+            "For the best experience, you can add tokkel to your homescreen. This will make it easy to access just like all your other apps.",
+            "Welcome"
+          );
+        }, 500);
       }
       //first time visitor
       Cookies.set("visited");
@@ -42,7 +45,8 @@
     //install prompt
     window.addEventListener("beforeinstallprompt", (e) => {
       f7.dialog.alert(
-        "You can add tokkel to your homescreen for the best experience"
+        "You can add tokkel to your homescreen for the best experience",
+        "Welcome"
       );
     });
   });
