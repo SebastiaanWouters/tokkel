@@ -20,7 +20,7 @@
   } from "framework7-svelte";
   import { authStore } from "../lib/pocketbase";
   import { onMount } from "svelte";
-  import { FolderPlus, MailPlus, X, ChevronRightSquare } from "lucide-svelte";
+  import { MailPlus, X, ChevronRightSquare } from "lucide-svelte";
   import { fetchAllUsers, fetchChatPartners, logoutUser } from "../lib/api";
   import type { ChatPartner, User } from "../lib/types";
   import { createQuery } from "@tanstack/svelte-query";
@@ -46,13 +46,15 @@
   }
 
   const users = createQuery<User[] | null>({
-    queryKey: [$authStore.id, "users"],
+    queryKey: [$authStore?.id, "users"],
     queryFn: () => fetchAllUsers(),
+    enabled: $authStore ? true : false,
   });
 
   const partners = createQuery<ChatPartner[] | null>({
-    queryKey: [$authStore.id, "partners"],
+    queryKey: [$authStore?.id, "partners"],
     queryFn: () => fetchChatPartners(),
+    enabled: $authStore ? true : false,
   });
 </script>
 
