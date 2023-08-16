@@ -3,8 +3,7 @@ import HomePage from '../pages/home.svelte';
 import LoginPage from '../pages/login.svelte';
 import Register from '../pages/register.svelte'
 import NotFoundPage from '../pages/404.svelte';
-import { authStore } from '../lib/pocketbase';
-import { app } from 'framework7-svelte';
+import Chat from '../pages/chat.svelte';
 
 var routes = [
   {
@@ -27,6 +26,13 @@ var routes = [
       transition: 'f7-dive',
     },
     component: Register,
+  },
+    {
+    path: '/:partnerId',
+    options: {
+      transition: 'f7-parallax',
+    },
+    component: Chat,
   },
   {
     path: '(.*)',

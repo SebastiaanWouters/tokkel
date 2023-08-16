@@ -6,6 +6,6 @@
   class="rounded-full bg-yellow-600"
   class:h-12={lg}
   class:w-12={lg}
-  class:h-10={!lg}
-  class:w-10={!lg}
+  class:h-8={!lg}
+  class:w-8={!lg}
 />

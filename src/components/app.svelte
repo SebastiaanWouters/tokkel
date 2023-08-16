@@ -28,6 +28,7 @@
   import { QueryClient, QueryClientProvider } from "@tanstack/svelte-query";
   import capacitorApp from "../js/capacitor-app";
   import routes from "../js/routes";
+  import RealtimeProvider from "./RealtimeProvider.svelte";
 
   const device = getDevice();
   // Framework7 Parameters
@@ -76,9 +77,11 @@
 
 <KonstaProvider dark theme="parent">
   <QueryClientProvider client={queryClient}>
-    <App {...f7params}>
-      <!-- Your main view, should have "view-main" class -->
-      <View main class="safe-areas" url="/" />
-    </App>
+    <RealtimeProvider>
+      <App {...f7params}>
+        <!-- Your main view, should have "view-main" class -->
+        <View main class="safe-areas" url="/" />
+      </App>
+    </RealtimeProvider>
   </QueryClientProvider>
 </KonstaProvider>

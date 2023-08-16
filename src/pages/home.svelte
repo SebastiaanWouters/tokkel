@@ -4,12 +4,6 @@
     Navbar,
     NavTitle,
     Link,
-    f7,
-    PageContent,
-    Block,
-    NavTitleLarge,
-    Toolbar,
-    BlockTitle,
     Button,
     Popup,
     NavRight,
@@ -17,20 +11,20 @@
     Searchbar,
     List,
     ListItem,
+    NavLeft,
   } from "framework7-svelte";
   import { authStore } from "../lib/pocketbase";
   import { onMount } from "svelte";
-  import { MailPlus, X, ChevronRightSquare } from "lucide-svelte";
+  import { MailPlus, X, ChevronRight, LogOut } from "lucide-svelte";
   import { fetchAllUsers, fetchChatPartners, logoutUser } from "../lib/api";
   import type { ChatPartner, User } from "../lib/types";
   import { createQuery } from "@tanstack/svelte-query";
   import Avatar from "../components/Avatar.svelte";
+  import RealtimeProvider from "../components/RealtimeProvider.svelte";
 
   export let f7router;
   let ready = false;
   let newChatOpened = false;
-  let searchedUser = null;
-  let searchedUsers: null | User[] = null;
 
   onMount(async () => {
     if (!$authStore) {
@@ -61,9 +55,17 @@
 <Page id="page" name="home">
   {#if ready}
     <!-- Top Navbar -->
-    <Navbar class="p-6" sliding={true}>
-      <NavTitle class="">Messages</NavTitle>
-      <NavRight class="mx-2"
+
+    <Navbar title="Messages" class="" sliding={true}>
+      <NavLeft slot="left"
+        ><Link
+          on:click={() => {
+            logoutUser();
+          }}><LogOut /></Link
+        ></NavLeft
+      >
+
+      <NavRight slot="right" class=""
         ><Link popupOpen=".popup"><MailPlus /></Link></NavRight
       >
     </Navbar>
@@ -74,37 +76,35 @@
     <List mediaList dividersIos class="mt-0">
       {#if $partners.isSuccess}
         {#each $partners.data as partner}
-          <ListItem
-            class="py-1"
-            title={partner.user.username}
-            subtitle={partner.content}
-          >
-            <Avatar slot="media" />
-            <Link
-              slot="content-end"
-              class="h-full flex flex-col justify-center mx-4"
-              ><ChevronRightSquare /></Link
+          <Link href={`/${partner.user.id}`} class="w-full ">
+            <ListItem
+              class="py-1 w-full"
+              title={partner.user.username}
+              subtitle={partner.content}
             >
-          </ListItem>
+              <Avatar slot="media" />
+              <div
+                slot="content-end"
+                class="h-full flex flex-col justify-center mx-4"
+              >
+                <ChevronRight class="text-zinc-200" />
+              </div>
+            </ListItem>
+          </Link>
         {/each}
       {/if}
     </List>
-    <Button
-      fill
-      large
-      class="mx-8 absolute bottom-4 left-0 right-0"
-      onClick={() => {
-        logoutUser();
-      }}
-      >Logout
-    </Button>
 
-    <Popup class="popup" opened={newChatOpened}>
+    <Popup class="popup border border-white/20" opened={newChatOpened}>
       <Page>
         <Navbar class="bg-black" title="New Chat">
           <NavRight><Link popupClose=".popup"><X /></Link></NavRight>
           <Subnavbar inner={false}>
-            <Searchbar searchContainer=".search-list" searchIn=".item-title" />
+            <Searchbar
+              searchContainer=".search-list"
+              class="!bg-black"
+              searchIn=".item-title"
+            />
           </Subnavbar>
         </Navbar>
 
@@ -122,7 +122,13 @@
         >
           {#if $users.isSuccess}
             {#each $users.data as user}
-              <ListItem title={user.username} />
+              <Link
+                popupClose=".popup"
+                style="width: 100%; display: flex; justify-content: start"
+                href={`/${user.id}`}
+              >
+                <ListItem title={user.username} />
+              </Link>
             {/each}
           {/if}
         </List>

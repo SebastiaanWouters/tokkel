@@ -5,6 +5,7 @@ import PocketBase, { type ClientResponseError } from 'pocketbase';
 import { convertStringMapToList, getSecureKey, privKeyFromEntropy, setSecureKey } from "./utils";
 import type { ChatPartner, Message, MessageRecord, RawMessage, Result, User } from "./types";
 import { pb } from "./pocketbase";
+import { f7 } from "framework7-svelte";
 
 
 
@@ -40,8 +41,11 @@ import { pb } from "./pocketbase";
       }
 
   async function logoutUser() {
-    await setSecureKey(pb.authStore.model?.id ?? null, null)
-    pb.authStore.clear();
+    await f7.dialog.confirm("Are you sure you want to logout?", "Logout", async () => {
+        await setSecureKey(pb.authStore.model?.id ?? null, null)
+        pb.authStore.clear();
+    }, () => {f7.dialog.close()})
+   
   }
 
   async function fetchAllUsers(): Promise<User[] | null> {
@@ -130,8 +134,13 @@ async function postMessage(msg: string, from: User, to: User): Promise<Message |
 }
 
 async function getUserById(id: string): Promise<User> {
-  const user = (await pb.collection('users').getFirstListItem(`id="${id}"`)) as User;
-  return user;
+  try {
+     const user = (await pb.collection('users').getFirstListItem(`id="${id}"`)) as User;
+    return user;
+  } catch {
+    return null;
+  }
+ 
 }
 
 async function getUserByName(name: string): Promise<User | null> {
@@ -146,7 +155,7 @@ async function getUserByName(name: string): Promise<User | null> {
 
 async function fetchMessages(userId: string) : Promise<Message[]> {
    try {
-    const rawMsg: RawMessage[] = await pb.collection('messages').getFullList({ expand: 'from,to', sort: '-created',
+    const rawMsg: RawMessage[] = await pb.collection('messages').getFullList({ expand: 'from,to', sort: 'created',
     filter: `(from="${userId}" || to="${userId}") && (to="${pb.authStore.model?.id}" || from="${pb.authStore.model?.id}")`
     });
     const decrypted = await decryptMessages(rawMsg);
@@ -161,7 +170,7 @@ async function fetchMessages(userId: string) : Promise<Message[]> {
 async function fetchAllMessages() : Promise<Message[]> {
   console.log("User when fetching messages: " + pb.authStore.model?.username)
   try {
-    const rawMsg: RawMessage[] = await pb.collection('messages').getFullList({ expand: 'from,to', sort: '-created',
+    const rawMsg: RawMessage[] = await pb.collection('messages').getFullList({ expand: 'from,to', sort: 'created',
     filter: `from="${pb.authStore.model?.id}" || to="${pb.authStore.model?.id}"`, '$autoCancel': false
     });
     for (const msg of rawMsg) {
@@ -179,20 +188,22 @@ async function fetchAllMessages() : Promise<Message[]> {
 async function fetchChatPartners() : Promise<ChatPartner[] | null> {
   try {
   const messages = await fetchAllMessages();
-   for (const msg of messages) {
-      console.log("new message found while getting partners")
-      break;
-    }
+
   const partners = new Map<string, ChatPartner>()
     for (const msg of messages) {
       if (msg.from.id !== pb.authStore.model?.id) {
-        partners.set(msg.from.id, { user: msg.from, latest: msg.created, content: msg.content })
-        console.log("new partner: " + msg.from.username + " " + msg.created)
-        break;
+        if (!partners[msg.from.id]) {
+          partners.set(msg.from.id, { user: msg.from, latest: msg.created, content: msg.content })
+          console.log("new partner: " + msg.from.username + " " + msg.created)
+        }
+        
+        //break;
       } else if (msg.to.id !== pb.authStore.model.id) {
-        partners.set(msg.to.id, { user: msg.to, latest: msg.created, content: msg.content })
-         console.log("new partner: " + msg.to.username + " " + msg.created)
-         break;
+        if (!partners[msg.to.id]) {
+           partners.set(msg.to.id, { user: msg.to, latest: msg.created, content: msg.content })
+          console.log("new partner: " + msg.to.username + " " + msg.created)
+        }
+         //break;
       }
     }
     const partnersArray = convertStringMapToList(
