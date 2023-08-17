@@ -29,6 +29,7 @@
   import capacitorApp from "../js/capacitor-app";
   import routes from "../js/routes";
   import RealtimeProvider from "./RealtimeProvider.svelte";
+  import ChatProvider from "./ChatProvider.svelte";
 
   const device = getDevice();
   // Framework7 Parameters
@@ -77,11 +78,13 @@
 
 <KonstaProvider dark theme="parent">
   <QueryClientProvider client={queryClient}>
-    <RealtimeProvider>
-      <App {...f7params}>
-        <!-- Your main view, should have "view-main" class -->
-        <View main class="safe-areas" url="/" />
-      </App>
-    </RealtimeProvider>
+    <ChatProvider>
+      <RealtimeProvider>
+        <App {...f7params}>
+          <!-- Your main view, should have "view-main" class -->
+          <View main class="safe-areas" url="/" />
+        </App>
+      </RealtimeProvider>
+    </ChatProvider>
   </QueryClientProvider>
 </KonstaProvider>

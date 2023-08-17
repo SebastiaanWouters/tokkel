@@ -185,6 +185,35 @@ async function fetchAllMessages() : Promise<Message[]> {
   
 }
 
+async function fetchChatPartnersFromMessages(messages: Message[]) : Promise<ChatPartner[] | null> {
+  try {
+  const partners = new Map<string, ChatPartner>()
+    for (const msg of messages) {
+      if (msg.from.id !== pb.authStore.model?.id) {
+        if (!partners[msg.from.id]) {
+          partners.set(msg.from.id, { user: msg.from, latest: msg.created, content: msg.content })
+          console.log("new partner: " + msg.from.username + " " + msg.created)
+        }
+        
+        //break;
+      } else if (msg.to.id !== pb.authStore.model.id) {
+        if (!partners[msg.to.id]) {
+           partners.set(msg.to.id, { user: msg.to, latest: msg.created, content: msg.content })
+          console.log("new partner: " + msg.to.username + " " + msg.created)
+        }
+         //break;
+      }
+    }
+    const partnersArray = convertStringMapToList(
+      partners,
+      "latest"
+    ) as ChatPartner[];
+    return partnersArray;
+  } catch {
+      return null
+    }
+}
+
 async function fetchChatPartners() : Promise<ChatPartner[] | null> {
   try {
   const messages = await fetchAllMessages();
@@ -232,4 +261,4 @@ const rememberUser = writable<boolean>(false);
 
 
 
-export {rememberUser, fetchAllUsers, decryptRealtime, getUserByName, expandMessage, getUserById, fetchMessages, fetchAllMessages, fetchChatPartners, postMessage, createUser, loginUser, logoutUser }
+export {rememberUser, fetchAllUsers, decryptRealtime, getUserByName, expandMessage, getUserById, fetchMessages, fetchAllMessages, fetchChatPartners, fetchChatPartnersFromMessages, postMessage, createUser, loginUser, logoutUser }

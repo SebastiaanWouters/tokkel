@@ -24,6 +24,8 @@
   import { fetchAllMessages, getUserById } from "../lib/api";
   import Avatar from "../components/Avatar.svelte";
   import { onMount } from "svelte";
+  import { minutesAgoFromTimestamp } from "../lib/utils";
+  import { getUnixTime } from "date-fns";
 
   export let partnerId: string = null;
   let messagebarInstance;
@@ -35,11 +37,7 @@
     });
   });
 
-  const partner = createQuery<User | null>({
-    queryKey: [partnerId, "partner"],
-    queryFn: () => getUserById(partnerId),
-    enabled: $authStore ? true : false,
-  });
+  const users = createQuery<User[]>(["users"]);
 
   const messages = createQuery<Message[]>({
     queryKey: [$authStore.id, "messages"],
@@ -54,10 +52,12 @@
     );
   });
 
+  $: currentPartner = $users.data.find((user) => user.id === partnerId);
+
   async function sendMessage(msg: string): Promise<void> {
     let sentMsg = null;
     if (msg) {
-      sentMsg = await postMessage(msg, $authStore, $partner.data);
+      sentMsg = await postMessage(msg, $authStore, currentPartner);
     }
     if (sentMsg) {
       //sent reset
@@ -66,52 +66,68 @@
   }
 
   function isFirstMessage(message, index) {
-    // const previousMessage = $messages.data[index - 1];
+    const previousMessage = currentMessages[index - 1];
     // if (message.isTitle) return false;
-    // if (
-    //   !previousMessage ||
-    //   previousMessage.type !== message.type ||
-    //   previousMessage.name !== message.name
-    // )
-    //   return true;
+    if (
+      !previousMessage ||
+      previousMessage.from.id !== message.from.id ||
+      Math.round(new Date(message.created).getTime() / 1000) >
+        Math.round(new Date(previousMessage.created).getTime() / 1000) + 240
+      //   || previousMessage.name !== message.name
+    ) {
+      return true;
+    } else {
+      return false;
+    }
+
     // return false;
-    return false;
   }
   function isLastMessage(message, index) {
-    // const nextMessage = $messages.data[index + 1];
+    const nextMessage = currentMessages[index + 1];
     // if (message.isTitle) return false;
-    // if (
-    //   !nextMessage ||
-    //   nextMessage.type !== message.type ||
-    //   nextMessage.name !== message.name
-    // )
+    if (
+      !nextMessage ||
+      nextMessage.from.id !== message.from.id
+
+      //  || nextMessage.name !== message.name
+    ) {
+      return true;
+    } else {
+      return false;
+    }
     //   return true;
     // return false;
     return false;
   }
   function isTailMessage(message, index) {
-    // const nextMessage = $messages.data[index + 1];
+    const nextMessage = currentMessages[index + 1];
     // if (message.isTitle) return false;
-    // if (
-    //   !nextMessage ||
-    //   nextMessage.type !== message.type ||
-    //   nextMessage.name !== message.name
-    // )
+    if (
+      !nextMessage ||
+      nextMessage.from.id !== message.from.id
+      //  || nextMessage.name !== message.name
+    ) {
+      return true;
+    } else {
+      return false;
+    }
     //   return true;
     // return false;
     return false;
   }
 </script>
 
-<Page>
-  <Navbar backLink>
+<Page class="">
+  <Navbar class="h-[3.75rem]" backLink>
     <NavRight
-      ><div class="flex gap-2">
-        {$partner.data?.username}<Avatar />
+      ><div class="flex gap-2 items-center">
+        <p>{currentPartner?.username}</p>
+        <Avatar seed={partnerId} />
       </div></NavRight
     >
   </Navbar>
   <Messagebar
+    resizable={false}
     placeholder="sdsd"
     value={message}
     onChange={(e) => {
@@ -132,12 +148,21 @@
     <MessagebarAttachments />
     <MessagebarSheet />
   </Messagebar>
-  <PageContent class="p-0">
+  <PageContent class="p-0 pt-4 no-scrollbar bg-zinc-950">
     {#if $messages.isSuccess}
       <Messages class="justify-end">
-        <MessagesTitle><b>Sunday, Feb 9,</b> 12:58</MessagesTitle>
+        <MessagesTitle
+          ><b>{currentMessages[0].created.slice(0, 10)}</b></MessagesTitle
+        >
         {#each currentMessages as message, index (index)}
           <F7Message
+            class="text-md py-[0.05rem]"
+            first={isFirstMessage(message, index)}
+            last={isLastMessage(message, index)}
+            tail={isTailMessage(message, index)}
+            header={isFirstMessage(message, index)
+              ? minutesAgoFromTimestamp(message.created)
+              : ""}
             type={message.from.id === $authStore.id ? "sent" : "received"}
             htmlText={message.content}
           />
